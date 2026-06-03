@@ -13,7 +13,8 @@ data class TaskEntity(
     val maxExecutions: Int,
     val frequency: TaskFrequency,
     val isFixed: Boolean,
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
+    val iconEmoji: String = "🎯"
 ) {
     fun toDomain() = Task(
         id = id,
@@ -22,7 +23,8 @@ data class TaskEntity(
         maxExecutions = maxExecutions,
         frequency = frequency,
         isFixed = isFixed,
-        sortOrder = sortOrder
+        sortOrder = sortOrder,
+        iconEmoji = iconEmoji
     )
 
     companion object {
@@ -33,7 +35,8 @@ data class TaskEntity(
             maxExecutions = task.maxExecutions,
             frequency = task.frequency,
             isFixed = task.isFixed,
-            sortOrder = task.sortOrder
+            sortOrder = task.sortOrder,
+            iconEmoji = task.iconEmoji
         )
     }
 }

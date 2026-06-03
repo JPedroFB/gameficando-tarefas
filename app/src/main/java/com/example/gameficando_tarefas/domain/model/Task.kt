@@ -7,5 +7,6 @@ data class Task(
     val maxExecutions: Int,
     val frequency: TaskFrequency,
     val isFixed: Boolean,
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
+    val iconEmoji: String = "🎯"
 )

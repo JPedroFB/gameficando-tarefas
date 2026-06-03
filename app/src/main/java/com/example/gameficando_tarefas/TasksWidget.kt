@@ -24,6 +24,7 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
@@ -68,10 +69,10 @@ fun TasksWidgetContent(tasks: List<com.example.gameficando_tarefas.domain.model.
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "🎮 Destaques",
+                text = "Destaques",
                 style = TextStyle(
                     color = GlanceTheme.colors.onPrimaryContainer,
-                    fontSize = 14.sp,
+                    fontSize = 30.sp,
                     fontWeight = FontWeight.Bold
                 ),
                 modifier = GlanceModifier.defaultWeight()
@@ -85,7 +86,7 @@ fun TasksWidgetContent(tasks: List<com.example.gameficando_tarefas.domain.model.
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "⭐ $netPoints pts",
+                    text = "$netPoints pontos",
                     style = TextStyle(
                         color = GlanceTheme.colors.onPrimary,
                         fontSize = 22.sp,
@@ -119,19 +120,28 @@ fun TasksWidgetContent(tasks: List<com.example.gameficando_tarefas.domain.model.
                     Row(
                         modifier = GlanceModifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
+                            .padding(5.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = GlanceModifier.defaultWeight()) {
-                            Text(
-                                text = task.description,
-                                style = TextStyle(
-                                    color = GlanceTheme.colors.onSurface,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Medium
-                                ),
-                                maxLines = 1
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = task.iconEmoji,
+                                    style = TextStyle(fontSize = 30.sp)
+                                )
+                                Spacer(modifier = GlanceModifier.width(10.dp))
+                                Text(
+                                    text = task.description,
+                                    style = TextStyle(
+                                        color = GlanceTheme.colors.onSurface,
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Medium
+                                    ),
+                                    maxLines = 1
+                                )
+                            }
                             Spacer(modifier = GlanceModifier.height(2.dp))
                             // Chip de pontos
                             Box(
@@ -152,6 +162,7 @@ fun TasksWidgetContent(tasks: List<com.example.gameficando_tarefas.domain.model.
                         }
                         Spacer(modifier = GlanceModifier.width(6.dp))
                         androidx.glance.Button(
+                            modifier = GlanceModifier.padding(30.dp, vertical = 10.dp),
                             text = "✓",
                             onClick = actionRunCallback<ExecuteTaskAction>(
                                 parameters = androidx.glance.action.actionParametersOf(
