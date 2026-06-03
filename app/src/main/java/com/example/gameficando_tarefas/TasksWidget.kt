@@ -28,6 +28,8 @@ import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import androidx.glance.preview.ExperimentalGlancePreviewApi
+import androidx.glance.preview.Preview
 import com.example.gameficando_tarefas.data.db.AppDatabase
 import com.example.gameficando_tarefas.data.db.entity.TaskExecutionEntity
 import kotlinx.coroutines.flow.first
@@ -78,15 +80,15 @@ fun TasksWidgetContent(tasks: List<com.example.gameficando_tarefas.domain.model.
             Box(
                 modifier = GlanceModifier
                     .background(GlanceTheme.colors.primary)
-                    .cornerRadius(12.dp)
-                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                    .cornerRadius(1.dp)
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "⭐ $netPoints pts",
                     style = TextStyle(
                         color = GlanceTheme.colors.onPrimary,
-                        fontSize = 11.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
                     )
                 )
@@ -125,7 +127,7 @@ fun TasksWidgetContent(tasks: List<com.example.gameficando_tarefas.domain.model.
                                 text = task.description,
                                 style = TextStyle(
                                     color = GlanceTheme.colors.onSurface,
-                                    fontSize = 13.sp,
+                                    fontSize = 20.sp,
                                     fontWeight = FontWeight.Medium
                                 ),
                                 maxLines = 1
@@ -188,4 +190,32 @@ class ExecuteTaskAction : ActionCallback {
 
 class TasksWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = TasksWidget()
+}
+
+@OptIn(ExperimentalGlancePreviewApi::class)
+@Preview
+@Composable
+fun TasksWidgetPreview() {
+    GlanceTheme {
+        TasksWidgetContent(
+            tasks = listOf(
+                com.example.gameficando_tarefas.domain.model.Task(
+                    id = 1, description = "Beber água", pointsValue = 5,
+                    maxExecutions = 0, isFixed = false, sortOrder = 0,
+                    frequency = com.example.gameficando_tarefas.domain.model.TaskFrequency.DAILY
+                ),
+                com.example.gameficando_tarefas.domain.model.Task(
+                    id = 2, description = "Exercitar 30min", pointsValue = 20,
+                    maxExecutions = 0, isFixed = false, sortOrder = 1,
+                    frequency = com.example.gameficando_tarefas.domain.model.TaskFrequency.DAILY
+                ),
+                com.example.gameficando_tarefas.domain.model.Task(
+                    id = 3, description = "Leitura", pointsValue = 10,
+                    maxExecutions = 0, isFixed = false, sortOrder = 2,
+                    frequency = com.example.gameficando_tarefas.domain.model.TaskFrequency.DAILY
+                ),
+            ),
+            netPoints = 150
+        )
+    }
 }
