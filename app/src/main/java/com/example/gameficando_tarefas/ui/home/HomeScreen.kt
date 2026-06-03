@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -20,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.glance.layout.Spacer
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gameficando_tarefas.ui.components.GoalProgressCard
 import com.example.gameficando_tarefas.ui.components.PointsBanner
@@ -40,7 +41,7 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         item {
-            PointsBanner(totalPoints = state.totalPoints)
+            PointsBanner(totalPoints = state.netPoints)
         }
 
         item {
@@ -51,29 +52,22 @@ fun HomeScreen(
             item {
                 GoalProgressCard(
                     goal = goal,
-                    totalPoints = state.totalPoints,
+                    totalPoints = state.netPoints,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-            }
-        }
-
-        if (state.achievedGoals.isNotEmpty()) {
-            item {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text(
-                        text = "✅ ${state.achievedGoals.size} objetivo(s) conquistado(s)",
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                if (state.canRedeemNextGoal) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { viewModel.redeemGoal(goal) },
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        )
+                    ) {
+                        Text("Coletar objetivo (−${goal.pointsRequired} pts)")
+                    }
                 }
+                Spacer(modifier = Modifier.height(4.dp))
             }
         }
 

@@ -2,6 +2,7 @@ package com.example.gameficando_tarefas.data.repository
 
 import com.example.gameficando_tarefas.data.db.dao.TaskDao
 import com.example.gameficando_tarefas.data.db.dao.TaskExecutionDao
+import com.example.gameficando_tarefas.data.db.dao.TaskExecutionHistory
 import com.example.gameficando_tarefas.data.db.entity.TaskEntity
 import com.example.gameficando_tarefas.data.db.entity.TaskExecutionEntity
 import com.example.gameficando_tarefas.domain.model.Task
@@ -20,6 +21,9 @@ class TaskRepository(
 
     fun getExecutionsSince(taskId: Long, since: Long): Flow<List<TaskExecution>> =
         executionDao.getExecutionsSince(taskId, since).map { list -> list.map { it.toDomain() } }
+
+    fun getExecutionHistory(): Flow<List<TaskExecutionHistory>> =
+        executionDao.getAllExecutionHistory()
 
     suspend fun save(task: Task) {
         if (task.id == 0L) {

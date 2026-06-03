@@ -18,6 +18,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
@@ -82,7 +84,8 @@ fun GoalsScreen(
                             editingGoal = goalState.goal
                             showDialog = true
                         },
-                        onDelete = { viewModel.delete(goalState.goal) }
+                        onDelete = { viewModel.delete(goalState.goal) },
+                        onRedeem = { viewModel.redeemGoal(goalState.goal) }
                     )
                 }
             }
@@ -120,48 +123,73 @@ fun GoalsScreen(
 private fun GoalItem(
     goalState: GoalUiState,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onRedeem: () -> Unit
 ) {
     val goal = goalState.goal
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = if (goalState.isAchieved)
-                MaterialTheme.colorScheme.tertiaryContainer
-            else MaterialTheme.colorScheme.surface
+            containerColor = when {
+                goalState.isRedeemed -> MaterialTheme.colorScheme.secondaryContainer
+                goalState.isAchieved -> MaterialTheme.colorScheme.tertiaryContainer
+                else -> MaterialTheme.colorScheme.surface
+            }
         )
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(16.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (goalState.isAchieved) {
-                        Text("✅ ", style = MaterialTheme.typography.titleMedium)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (goalState.isRedeemed) {
+                            Text("✅ ", style = MaterialTheme.typography.titleMedium)
+                        }
+                        Text(
+                            text = goal.description,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
-                    Text(
-                        text = goal.description,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Badge(containerColor = MaterialTheme.colorScheme.primaryContainer) {
+                        Text(
+                            text = "${goal.pointsRequired} pts",
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.height(4.dp))
-                Badge(containerColor = MaterialTheme.colorScheme.primaryContainer) {
-                    Text(
-                        text = "${goal.pointsRequired} pts",
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                Row {
+                    IconButton(onClick = onEdit) {
+                        Icon(Icons.Filled.Edit, contentDescription = "Editar")
+                    }
+                    IconButton(onClick = onDelete) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Excluir")
+                    }
                 }
             }
-            Row {
-                IconButton(onClick = onEdit) {
-                    Icon(Icons.Filled.Edit, contentDescription = "Editar")
-                }
-                IconButton(onClick = onDelete) {
-                    Icon(Icons.Filled.Delete, contentDescription = "Excluir")
+            if (goalState.isRedeemed) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Coletado ✅",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            } else if (goalState.canRedeem) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = onRedeem,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary
+                    )
+                ) {
+                    Text("Coletar (−${goal.pointsRequired} pts)")
                 }
             }
         }

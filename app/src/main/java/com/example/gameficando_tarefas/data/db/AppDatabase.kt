@@ -5,16 +5,36 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.gameficando_tarefas.data.db.dao.GoalDao
+import com.example.gameficando_tarefas.data.db.dao.GoalRedemptionDao
 import com.example.gameficando_tarefas.data.db.dao.TaskDao
 import com.example.gameficando_tarefas.data.db.dao.TaskExecutionDao
 import com.example.gameficando_tarefas.data.db.entity.GoalEntity
+import com.example.gameficando_tarefas.data.db.entity.GoalRedemptionEntity
 import com.example.gameficando_tarefas.data.db.entity.TaskEntity
 import com.example.gameficando_tarefas.data.db.entity.TaskExecutionEntity
 
+val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS goal_redemptions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                goalId INTEGER NOT NULL,
+                goalDescription TEXT NOT NULL,
+                pointsCost INTEGER NOT NULL,
+                redeemedAt INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
+}
+
 @Database(
-    entities = [GoalEntity::class, TaskEntity::class, TaskExecutionEntity::class],
-    version = 1,
+    entities = [GoalEntity::class, TaskEntity::class, TaskExecutionEntity::class, GoalRedemptionEntity::class],
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -23,6 +43,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun goalDao(): GoalDao
     abstract fun taskDao(): TaskDao
     abstract fun taskExecutionDao(): TaskExecutionDao
+    abstract fun goalRedemptionDao(): GoalRedemptionDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -33,7 +54,10 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "gameficando_tarefas.db"
-                ).build().also { INSTANCE = it }
+                )
+                    .addMigrations(MIGRATION_1_2)
+                    .build().also { INSTANCE = it }
             }
     }
 }
+

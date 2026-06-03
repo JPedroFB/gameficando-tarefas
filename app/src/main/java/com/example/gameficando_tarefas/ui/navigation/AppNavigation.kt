@@ -2,6 +2,7 @@ package com.example.gameficando_tarefas.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
@@ -19,9 +20,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.gameficando_tarefas.data.repository.GoalRepository
+import com.example.gameficando_tarefas.data.repository.GoalRedemptionRepository
 import com.example.gameficando_tarefas.data.repository.TaskRepository
 import com.example.gameficando_tarefas.ui.goals.GoalsScreen
 import com.example.gameficando_tarefas.ui.goals.GoalsViewModel
+import com.example.gameficando_tarefas.ui.history.HistoryScreen
+import com.example.gameficando_tarefas.ui.history.HistoryViewModel
 import com.example.gameficando_tarefas.ui.home.HomeScreen
 import com.example.gameficando_tarefas.ui.home.HomeViewModel
 import com.example.gameficando_tarefas.ui.tasks.TasksScreen
@@ -31,11 +35,13 @@ import kotlinx.serialization.Serializable
 @Serializable object Home
 @Serializable object Goals
 @Serializable object Tasks
+@Serializable object History
 
 @Composable
 fun AppNavigation(
     taskRepository: TaskRepository,
     goalRepository: GoalRepository,
+    redemptionRepository: GoalRedemptionRepository,
     modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
@@ -45,7 +51,8 @@ fun AppNavigation(
     val navItems = listOf(
         Triple(Home, "Início", Icons.Filled.Home),
         Triple(Goals, "Objetivos", Icons.Filled.Star),
-        Triple(Tasks, "Tarefas", Icons.Filled.List)
+        Triple(Tasks, "Tarefas", Icons.Filled.List),
+        Triple(History, "Histórico", Icons.Filled.History)
     )
 
     Scaffold(
@@ -75,13 +82,13 @@ fun AppNavigation(
         ) {
             composable<Home> {
                 val vm: HomeViewModel = viewModel(
-                    factory = HomeViewModel.Factory(taskRepository, goalRepository)
+                    factory = HomeViewModel.Factory(taskRepository, goalRepository, redemptionRepository)
                 )
                 HomeScreen(viewModel = vm, contentPadding = innerPadding)
             }
             composable<Goals> {
                 val vm: GoalsViewModel = viewModel(
-                    factory = GoalsViewModel.Factory(goalRepository, taskRepository)
+                    factory = GoalsViewModel.Factory(goalRepository, taskRepository, redemptionRepository)
                 )
                 GoalsScreen(viewModel = vm, contentPadding = innerPadding)
             }
@@ -90,6 +97,12 @@ fun AppNavigation(
                     factory = TasksViewModel.Factory(taskRepository)
                 )
                 TasksScreen(viewModel = vm, contentPadding = innerPadding)
+            }
+            composable<History> {
+                val vm: HistoryViewModel = viewModel(
+                    factory = HistoryViewModel.Factory(taskRepository, redemptionRepository)
+                )
+                HistoryScreen(viewModel = vm, contentPadding = innerPadding)
             }
         }
     }
