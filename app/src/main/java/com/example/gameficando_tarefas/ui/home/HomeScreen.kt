@@ -53,6 +53,7 @@ fun HomeScreen(
                 GoalProgressCard(
                     goal = goal,
                     totalPoints = state.netPoints,
+                    upcomingGoals = state.upcomingGoals,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
                 if (state.canRedeemNextGoal) {

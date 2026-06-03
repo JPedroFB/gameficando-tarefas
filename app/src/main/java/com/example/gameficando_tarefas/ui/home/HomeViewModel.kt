@@ -30,6 +30,7 @@ data class HomeUiState(
     val netPoints: Int = 0,
     val nextGoal: Goal? = null,
     val canRedeemNextGoal: Boolean = false,
+    val upcomingGoals: List<Goal> = emptyList(),
     val tasks: List<TaskUiState> = emptyList()
 )
 
@@ -57,13 +58,15 @@ class HomeViewModel(
         val tasks = values[4] as List<Task>
         val netPoints = taskPoints - redemptionCost
         val redeemedIds = redemptions.map { it.goalId }.toSet()
-        val nextGoal = goals.sortedBy { it.pointsRequired }.firstOrNull { it.id !in redeemedIds }
+        val sortedGoals = goals.sortedBy { it.pointsRequired }.filter { it.id !in redeemedIds }
+        val nextGoal = sortedGoals.firstOrNull()
+        val upcomingGoals = sortedGoals.drop(1).take(4)
         val canRedeem = nextGoal != null && netPoints >= nextGoal.pointsRequired
-        Triple(netPoints, Pair(nextGoal, canRedeem), tasks)
+        Triple(netPoints, Triple(nextGoal, canRedeem, upcomingGoals), tasks)
     }.flatMapLatest { (netPoints, nextGoalData, tasks) ->
-        val (nextGoal, canRedeem) = nextGoalData
+        val (nextGoal, canRedeem, upcomingGoals) = nextGoalData
         if (tasks.isEmpty()) {
-            flowOf(HomeUiState(netPoints, nextGoal, canRedeem, emptyList()))
+            flowOf(HomeUiState(netPoints, nextGoal, canRedeem, upcomingGoals, emptyList()))
         } else {
             val executionFlows = tasks.map { task ->
                 val since = periodStart(task.frequency)
@@ -77,7 +80,7 @@ class HomeViewModel(
                     }
             }
             combine(executionFlows) { taskStates ->
-                HomeUiState(netPoints, nextGoal, canRedeem, taskStates.toList())
+                HomeUiState(netPoints, nextGoal, canRedeem, upcomingGoals, taskStates.toList())
             }
         }
     }.stateIn(
