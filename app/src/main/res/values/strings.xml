@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">gameficando-tarefas</string>
+    <string name="counter_widget_description">Widget de Contador</string>
+</resources>
