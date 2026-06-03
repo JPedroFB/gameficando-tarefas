@@ -5,20 +5,29 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
+import com.example.gameficando_tarefas.data.db.AppDatabase
+import com.example.gameficando_tarefas.data.repository.GoalRepository
+import com.example.gameficando_tarefas.data.repository.TaskRepository
+import com.example.gameficando_tarefas.ui.navigation.AppNavigation
 import com.example.gameficando_tarefas.ui.theme.GameficandotarefasTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val db = AppDatabase.getInstance(applicationContext)
+        val taskRepository = TaskRepository(db.taskDao(), db.taskExecutionDao())
+        val goalRepository = GoalRepository(db.goalDao())
+
         setContent {
             GameficandotarefasTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    CounterScreen(modifier = Modifier.padding(innerPadding))
-                }
+                AppNavigation(
+                    taskRepository = taskRepository,
+                    goalRepository = goalRepository,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
     }
