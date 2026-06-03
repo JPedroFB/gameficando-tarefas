@@ -27,7 +27,8 @@ class TaskRepository(
 
     suspend fun save(task: Task) {
         if (task.id == 0L) {
-            taskDao.insert(TaskEntity.fromDomain(task))
+            val nextOrder = taskDao.getMaxSortOrder() + 1
+            taskDao.insert(TaskEntity.fromDomain(task.copy(sortOrder = nextOrder)))
         } else {
             taskDao.update(TaskEntity.fromDomain(task))
         }
@@ -39,5 +40,16 @@ class TaskRepository(
 
     suspend fun recordExecution(execution: TaskExecution) {
         executionDao.insert(TaskExecutionEntity.fromDomain(execution))
+    }
+
+    suspend fun move(taskId: Long, direction: Int, allTasks: List<Task>) {
+        val sorted = allTasks.sortedWith(compareBy({ it.sortOrder }, { it.id })).toMutableList()
+        val index = sorted.indexOfFirst { it.id == taskId }
+        val targetIndex = index + direction
+        if (index < 0 || targetIndex < 0 || targetIndex >= sorted.size) return
+        val tmp = sorted[index]
+        sorted[index] = sorted[targetIndex]
+        sorted[targetIndex] = tmp
+        sorted.forEachIndexed { i, task -> taskDao.updateSortOrder(task.id, i) }
     }
 }

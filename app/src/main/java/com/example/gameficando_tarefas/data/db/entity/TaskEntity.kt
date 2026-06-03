@@ -12,7 +12,8 @@ data class TaskEntity(
     val pointsValue: Int,
     val maxExecutions: Int,
     val frequency: TaskFrequency,
-    val isFixed: Boolean
+    val isFixed: Boolean,
+    val sortOrder: Int = 0
 ) {
     fun toDomain() = Task(
         id = id,
@@ -20,7 +21,8 @@ data class TaskEntity(
         pointsValue = pointsValue,
         maxExecutions = maxExecutions,
         frequency = frequency,
-        isFixed = isFixed
+        isFixed = isFixed,
+        sortOrder = sortOrder
     )
 
     companion object {
@@ -30,7 +32,8 @@ data class TaskEntity(
             pointsValue = task.pointsValue,
             maxExecutions = task.maxExecutions,
             frequency = task.frequency,
-            isFixed = task.isFixed
+            isFixed = task.isFixed,
+            sortOrder = task.sortOrder
         )
     }
 }

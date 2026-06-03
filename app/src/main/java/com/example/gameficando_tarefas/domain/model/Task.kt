@@ -6,5 +6,6 @@ data class Task(
     val pointsValue: Int,
     val maxExecutions: Int,
     val frequency: TaskFrequency,
-    val isFixed: Boolean
+    val isFixed: Boolean,
+    val sortOrder: Int = 0
 )

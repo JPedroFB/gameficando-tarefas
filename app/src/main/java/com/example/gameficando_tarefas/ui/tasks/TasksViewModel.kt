@@ -29,6 +29,14 @@ class TasksViewModel(
         viewModelScope.launch { taskRepository.delete(task) }
     }
 
+    fun moveUp(task: Task) {
+        viewModelScope.launch { taskRepository.move(task.id, -1, tasks.value) }
+    }
+
+    fun moveDown(task: Task) {
+        viewModelScope.launch { taskRepository.move(task.id, +1, tasks.value) }
+    }
+
     class Factory(
         private val taskRepository: TaskRepository
     ) : ViewModelProvider.Factory {

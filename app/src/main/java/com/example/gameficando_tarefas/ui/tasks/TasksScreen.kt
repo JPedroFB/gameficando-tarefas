@@ -10,26 +10,32 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -47,6 +53,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gameficando_tarefas.domain.model.Task
 import com.example.gameficando_tarefas.domain.model.TaskFrequency
+
+private const val FEATURED_COUNT = 3
 
 @Composable
 fun TasksScreen(
@@ -74,36 +82,71 @@ fun TasksScreen(
                 )
             }
         } else {
+            val featured = tasks.take(FEATURED_COUNT)
+            val others = tasks.drop(FEATURED_COUNT)
+
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
                 contentPadding = contentPadding,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                item { Spacer(modifier = Modifier.height(8.dp)) }
-                items(tasks, key = { it.id }) { task ->
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    SectionHeader(
+                        title = "⭐ Destaques — no widget",
+                        subtitle = "As primeiras $FEATURED_COUNT tarefas aparecem na tela inicial"
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
+                itemsIndexed(featured, key = { _, t -> t.id }) { index, task ->
                     TaskItem(
                         task = task,
-                        onEdit = {
-                            editingTask = task
-                            showDialog = true
-                        },
-                        onDelete = { viewModel.delete(task) }
+                        isFeatured = true,
+                        canMoveUp = index > 0,
+                        canMoveDown = index < tasks.lastIndex,
+                        onEdit = { editingTask = task; showDialog = true },
+                        onDelete = { viewModel.delete(task) },
+                        onMoveUp = { viewModel.moveUp(task) },
+                        onMoveDown = { viewModel.moveDown(task) }
                     )
                 }
+
+                if (others.isNotEmpty()) {
+                    item {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        HorizontalDivider()
+                        Spacer(modifier = Modifier.height(4.dp))
+                        SectionHeader(title = "Outras tarefas")
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+
+                    itemsIndexed(others, key = { _, t -> t.id }) { index, task ->
+                        val globalIndex = FEATURED_COUNT + index
+                        TaskItem(
+                            task = task,
+                            isFeatured = false,
+                            canMoveUp = globalIndex > 0,
+                            canMoveDown = globalIndex < tasks.lastIndex,
+                            onEdit = { editingTask = task; showDialog = true },
+                            onDelete = { viewModel.delete(task) },
+                            onMoveUp = { viewModel.moveUp(task) },
+                            onMoveDown = { viewModel.moveDown(task) }
+                        )
+                    }
+                }
+
+                item { Spacer(modifier = Modifier.height(80.dp)) }
             }
         }
 
         FloatingActionButton(
-            onClick = {
-                editingTask = null
-                showDialog = true
-            },
+            onClick = { editingTask = null; showDialog = true },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(
-                    end = 16.dp,
-                    bottom = contentPadding.calculateBottomPadding() + 16.dp
-                )
+                .padding(end = 16.dp, bottom = contentPadding.calculateBottomPadding() + 16.dp)
         ) {
             Icon(Icons.Filled.Add, contentDescription = "Adicionar tarefa")
         }
@@ -122,19 +165,70 @@ fun TasksScreen(
 }
 
 @Composable
+private fun SectionHeader(title: String, subtitle: String? = null) {
+    Column {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.outline
+        )
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
+        }
+    }
+}
+
+@Composable
 private fun TaskItem(
     task: Task,
+    isFeatured: Boolean,
+    canMoveUp: Boolean,
+    canMoveDown: Boolean,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit
 ) {
-    Card {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = if (isFeatured)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+            else MaterialTheme.colorScheme.surface
+        )
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(horizontal = 8.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            // Reorder arrows
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(onClick = onMoveUp, enabled = canMoveUp) {
+                    Icon(
+                        Icons.Filled.ArrowUpward,
+                        contentDescription = "Mover para cima",
+                        tint = if (canMoveUp) MaterialTheme.colorScheme.primary
+                               else MaterialTheme.colorScheme.outlineVariant
+                    )
+                }
+                IconButton(onClick = onMoveDown, enabled = canMoveDown) {
+                    Icon(
+                        Icons.Filled.ArrowDownward,
+                        contentDescription = "Mover para baixo",
+                        tint = if (canMoveDown) MaterialTheme.colorScheme.primary
+                               else MaterialTheme.colorScheme.outlineVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(4.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = task.description,
@@ -174,6 +268,7 @@ private fun TaskItem(
                     }
                 }
             }
+
             Row {
                 IconButton(onClick = onEdit) {
                     Icon(Icons.Filled.Edit, contentDescription = "Editar")
@@ -294,7 +389,8 @@ private fun TaskDialog(
                             pointsValue = pts,
                             maxExecutions = maxExec,
                             frequency = frequency,
-                            isFixed = isFixed
+                            isFixed = isFixed,
+                            sortOrder = initial?.sortOrder ?: 0
                         )
                     )
                 }

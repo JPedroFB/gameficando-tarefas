@@ -2,6 +2,7 @@ package com.example.gameficando_tarefas
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
@@ -11,6 +12,7 @@ import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.action.ActionParameters
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.action.ActionCallback
@@ -56,42 +58,72 @@ fun CounterWidgetContent() {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(GlanceTheme.colors.surface)
-            .padding(12.dp),
+            .background(GlanceTheme.colors.primaryContainer)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "Contador",
-            style = TextStyle(
-                color = GlanceTheme.colors.onSurface,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium
-            )
-        )
 
-        Spacer(modifier = GlanceModifier.height(4.dp))
-
+        // Header
         Text(
-            text = "$count",
+            text = "🎯  CONTADOR",
             style = TextStyle(
-                color = GlanceTheme.colors.primary,
-                fontSize = 48.sp,
+                color = GlanceTheme.colors.onPrimaryContainer,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Bold
             )
         )
 
-        Spacer(modifier = GlanceModifier.height(12.dp))
+        Spacer(modifier = GlanceModifier.height(6.dp))
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Button(text = "−", onClick = actionRunCallback<DecrementAction>())
-            Spacer(modifier = GlanceModifier.width(8.dp))
-            Button(text = "+", onClick = actionRunCallback<IncrementAction>())
+        // Número em destaque
+        Text(
+            text = "%03d".format(count),
+            style = TextStyle(
+                color = GlanceTheme.colors.primary,
+                fontSize = 52.sp,
+                fontWeight = FontWeight.Bold
+            )
+        )
+
+        Spacer(modifier = GlanceModifier.height(10.dp))
+
+        // Botões principais − e +
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(
+                text = "  −  ",
+                onClick = actionRunCallback<DecrementAction>(),
+                style = TextStyle(
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+            Spacer(modifier = GlanceModifier.width(12.dp))
+            Button(
+                text = "  +  ",
+                onClick = actionRunCallback<IncrementAction>(),
+                style = TextStyle(
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            )
         }
 
-        Spacer(modifier = GlanceModifier.height(4.dp))
+        Spacer(modifier = GlanceModifier.height(6.dp))
 
-        Button(text = "Resetar", onClick = actionRunCallback<ResetAction>())
+        // Reset discreto
+        Text(
+            text = "↺  zerar",
+            style = TextStyle(
+                color = GlanceTheme.colors.onPrimaryContainer,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
+            ),
+            modifier = GlanceModifier.clickable(actionRunCallback<ResetAction>())
+        )
     }
 }
 
