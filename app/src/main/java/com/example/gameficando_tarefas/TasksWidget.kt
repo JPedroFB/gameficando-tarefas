@@ -24,30 +24,36 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
-import androidx.glance.layout.size
 import androidx.glance.layout.width
+import androidx.glance.preview.ExperimentalGlancePreviewApi
+import androidx.glance.preview.Preview
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import androidx.glance.preview.ExperimentalGlancePreviewApi
-import androidx.glance.preview.Preview
 import com.example.gameficando_tarefas.data.db.AppDatabase
 import com.example.gameficando_tarefas.data.db.entity.TaskExecutionEntity
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 
 val TaskIdKey = ActionParameters.Key<Long>("task_id")
 
 class TasksWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val db = AppDatabase.getInstance(context)
-        val tasks = db.taskDao().getAllTasks().first().take(3)
-        val totalPoints = db.taskExecutionDao().getTotalPoints().first()
-        val totalRedemptions = db.goalRedemptionDao().getTotalRedemptionCost().first()
-        val netPoints = totalPoints - totalRedemptions
 
-        provideContent {
-            GlanceTheme {
-                TasksWidgetContent(tasks.map { it.toDomain() }, netPoints)
+        // Combina os 3 flows do Room — sempre que qualquer tabela mudar,
+        // provideContent é chamado novamente com dados frescos automaticamente
+        combine(
+            db.taskDao().getAllTasks(),
+            db.taskExecutionDao().getTotalPoints(),
+            db.goalRedemptionDao().getTotalRedemptionCost()
+        ) { tasks, totalPoints, totalRedemptions ->
+            Pair(tasks.take(3), totalPoints - totalRedemptions)
+        }.collectLatest { (tasks, netPoints) ->
+            provideContent {
+                GlanceTheme {
+                    TasksWidgetContent(tasks.map { it.toDomain() }, netPoints)
+                }
             }
         }
     }
@@ -195,7 +201,7 @@ class ExecuteTaskAction : ActionCallback {
         val taskId = parameters[TaskIdKey] ?: return
         val db = AppDatabase.getInstance(context)
         db.taskExecutionDao().insert(TaskExecutionEntity(taskId = taskId))
-        TasksWidget().update(context, glanceId)
+        // O Flow em provideGlance detecta a mudança e atualiza o widget automaticamente
     }
 }
 
