@@ -70,7 +70,7 @@ class HomeViewModel(
         } else {
             val executionFlows = tasks.map { task ->
                 val since = periodStart(task.frequency)
-                taskRepository.getExecutionsSince(task.id, since)
+                taskRepository.getExecutionsSince(task.id, task.profileId, since)
                     .let { flow ->
                         combine(flowOf(task), flow) { t, execs ->
                             val count = execs.size
@@ -91,13 +91,13 @@ class HomeViewModel(
 
     fun executeTask(task: Task) {
         viewModelScope.launch {
-            taskRepository.recordExecution(TaskExecution(taskId = task.id))
+            taskRepository.recordExecution(TaskExecution(taskId = task.id, profileId = task.profileId))
         }
     }
 
     fun redeemGoal(goal: Goal) {
         viewModelScope.launch {
-            redemptionRepository.redeem(goal.id, goal.description, goal.pointsRequired)
+            redemptionRepository.redeem(goal.id, goal.description, goal.pointsRequired, goal.profileId)
         }
     }
 

@@ -32,23 +32,27 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.example.gameficando_tarefas.data.db.AppDatabase
 import com.example.gameficando_tarefas.data.db.entity.TaskExecutionEntity
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 
 val TaskIdKey = ActionParameters.Key<Long>("task_id")
+val TaskProfileIdKey = ActionParameters.Key<Long>("task_profile_id")
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class TasksWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val db = AppDatabase.getInstance(context)
 
-        // Combina os 3 flows do Room — sempre que qualquer tabela mudar,
-        // provideContent é chamado novamente com dados frescos automaticamente
-        combine(
-            db.taskDao().getAllTasks(),
-            db.taskExecutionDao().getTotalPoints(),
-            db.goalRedemptionDao().getTotalRedemptionCost()
-        ) { tasks, totalPoints, totalRedemptions ->
-            Pair(tasks.take(3), totalPoints - totalRedemptions)
+        db.profileStateDao().observeActiveProfileId().flatMapLatest { profileId ->
+            combine(
+                db.taskDao().getAllTasks(profileId),
+                db.taskExecutionDao().getTotalPoints(profileId),
+                db.goalRedemptionDao().getTotalRedemptionCost(profileId)
+            ) { tasks, totalPoints, totalRedemptions ->
+                Pair(tasks.take(3), totalPoints - totalRedemptions)
+            }
         }.collectLatest { (tasks, netPoints) ->
             provideContent {
                 GlanceTheme {
@@ -172,7 +176,8 @@ fun TasksWidgetContent(tasks: List<com.example.gameficando_tarefas.domain.model.
                             text = "✓",
                             onClick = actionRunCallback<ExecuteTaskAction>(
                                 parameters = androidx.glance.action.actionParametersOf(
-                                    TaskIdKey to task.id
+                                    TaskIdKey to task.id,
+                                    TaskProfileIdKey to task.profileId
                                 )
                             )
                         )
@@ -199,8 +204,9 @@ class ExecuteTaskAction : ActionCallback {
         parameters: ActionParameters
     ) {
         val taskId = parameters[TaskIdKey] ?: return
+        val profileId = parameters[TaskProfileIdKey] ?: return
         val db = AppDatabase.getInstance(context)
-        db.taskExecutionDao().insert(TaskExecutionEntity(taskId = taskId))
+        db.taskExecutionDao().insert(TaskExecutionEntity(taskId = taskId, profileId = profileId))
         // O Flow em provideGlance detecta a mudança e atualiza o widget automaticamente
     }
 }

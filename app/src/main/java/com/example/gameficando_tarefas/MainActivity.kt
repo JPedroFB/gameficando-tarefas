@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import com.example.gameficando_tarefas.data.db.AppDatabase
 import com.example.gameficando_tarefas.data.repository.GoalRepository
 import com.example.gameficando_tarefas.data.repository.GoalRedemptionRepository
+import com.example.gameficando_tarefas.data.repository.ProfileRepository
 import com.example.gameficando_tarefas.data.repository.TaskRepository
 import com.example.gameficando_tarefas.notification.createNotificationChannel
 import com.example.gameficando_tarefas.notification.showCounterNotification
@@ -33,9 +34,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val db = AppDatabase.getInstance(applicationContext)
-        val taskRepository = TaskRepository(db.taskDao(), db.taskExecutionDao())
-        val goalRepository = GoalRepository(db.goalDao())
-        val redemptionRepository = GoalRedemptionRepository(db.goalRedemptionDao())
+        val profileRepository = ProfileRepository(db.profileDao(), db.profileStateDao())
+        val taskRepository = TaskRepository(db.taskDao(), db.taskExecutionDao(), db.profileStateDao())
+        val goalRepository = GoalRepository(db.goalDao(), db.profileStateDao())
+        val redemptionRepository = GoalRedemptionRepository(db.goalRedemptionDao(), db.profileStateDao())
 
         // Canal deve ser criado antes de exibir qualquer notificação
         createNotificationChannel(this)
@@ -44,6 +46,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             GameficandotarefasTheme {
                 AppNavigation(
+                    profileRepository = profileRepository,
                     taskRepository = taskRepository,
                     goalRepository = goalRepository,
                     redemptionRepository = redemptionRepository,

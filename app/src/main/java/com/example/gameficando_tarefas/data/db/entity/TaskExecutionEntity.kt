@@ -16,20 +16,27 @@ import com.example.gameficando_tarefas.domain.model.TaskExecution
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("taskId")]
+    indices = [Index("taskId"), Index("profileId")]
 )
 data class TaskExecutionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val taskId: Long,
-    val executedAt: Long = System.currentTimeMillis()
+    val executedAt: Long = System.currentTimeMillis(),
+    val profileId: Long = 1
 ) {
-    fun toDomain() = TaskExecution(id = id, taskId = taskId, executedAt = executedAt)
+    fun toDomain() = TaskExecution(
+        id = id,
+        taskId = taskId,
+        executedAt = executedAt,
+        profileId = profileId
+    )
 
     companion object {
         fun fromDomain(exec: TaskExecution) = TaskExecutionEntity(
             id = exec.id,
             taskId = exec.taskId,
-            executedAt = exec.executedAt
+            executedAt = exec.executedAt,
+            profileId = exec.profileId
         )
     }
 }

@@ -1,11 +1,15 @@
 package com.example.gameficando_tarefas.data.db.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.gameficando_tarefas.domain.model.Task
 import com.example.gameficando_tarefas.domain.model.TaskFrequency
 
-@Entity(tableName = "tasks")
+@Entity(
+    tableName = "tasks",
+    indices = [Index("profileId")]
+)
 data class TaskEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val description: String,
@@ -14,7 +18,8 @@ data class TaskEntity(
     val frequency: TaskFrequency,
     val isFixed: Boolean,
     val sortOrder: Int = 0,
-    val iconEmoji: String = "🎯"
+    val iconEmoji: String = "🎯",
+    val profileId: Long = 1
 ) {
     fun toDomain() = Task(
         id = id,
@@ -24,7 +29,8 @@ data class TaskEntity(
         frequency = frequency,
         isFixed = isFixed,
         sortOrder = sortOrder,
-        iconEmoji = iconEmoji
+        iconEmoji = iconEmoji,
+        profileId = profileId
     )
 
     companion object {
@@ -36,7 +42,8 @@ data class TaskEntity(
             frequency = task.frequency,
             isFixed = task.isFixed,
             sortOrder = task.sortOrder,
-            iconEmoji = task.iconEmoji
+            iconEmoji = task.iconEmoji,
+            profileId = task.profileId
         )
     }
 }

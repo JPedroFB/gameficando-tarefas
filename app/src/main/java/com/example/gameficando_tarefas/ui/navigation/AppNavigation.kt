@@ -1,9 +1,9 @@
 package com.example.gameficando_tarefas.ui.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -13,7 +13,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.gameficando_tarefas.data.repository.ProfileRepository
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -28,6 +30,8 @@ import com.example.gameficando_tarefas.ui.history.HistoryScreen
 import com.example.gameficando_tarefas.ui.history.HistoryViewModel
 import com.example.gameficando_tarefas.ui.home.HomeScreen
 import com.example.gameficando_tarefas.ui.home.HomeViewModel
+import com.example.gameficando_tarefas.ui.profile.ProfileTopBar
+import com.example.gameficando_tarefas.ui.profile.ProfileViewModel
 import com.example.gameficando_tarefas.ui.tasks.TasksScreen
 import com.example.gameficando_tarefas.ui.tasks.TasksViewModel
 import kotlinx.serialization.Serializable
@@ -39,24 +43,36 @@ import kotlinx.serialization.Serializable
 
 @Composable
 fun AppNavigation(
+    profileRepository: ProfileRepository,
     taskRepository: TaskRepository,
     goalRepository: GoalRepository,
     redemptionRepository: GoalRedemptionRepository,
     modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
+    val profileVm: ProfileViewModel = viewModel(
+        factory = ProfileViewModel.Factory(profileRepository)
+    )
+    val profileState by profileVm.uiState.collectAsStateWithLifecycle()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
 
     val navItems = listOf(
         Triple(Home, "Início", Icons.Filled.Home),
         Triple(Goals, "Objetivos", Icons.Filled.Star),
-        Triple(Tasks, "Tarefas", Icons.Filled.List),
+        Triple(Tasks, "Tarefas", Icons.AutoMirrored.Filled.List),
         Triple(History, "Histórico", Icons.Filled.History)
     )
 
     Scaffold(
         modifier = modifier,
+        topBar = {
+            ProfileTopBar(
+                profiles = profileState.profiles,
+                activeProfileId = profileState.activeProfileId,
+                onSelectProfile = profileVm::setActiveProfile
+            )
+        },
         bottomBar = {
             NavigationBar {
                 navItems.forEach { (route, label, icon) ->

@@ -232,7 +232,14 @@ private fun GoalDialog(
                 onClick = {
                     val pts = pointsText.toIntOrNull() ?: return@TextButton
                     if (description.isBlank()) return@TextButton
-                    onConfirm(Goal(id = initial?.id ?: 0, description = description.trim(), pointsRequired = pts))
+                    onConfirm(
+                        Goal(
+                            id = initial?.id ?: 0,
+                            description = description.trim(),
+                            pointsRequired = pts,
+                            profileId = initial?.profileId ?: 0
+                        )
+                    )
                 }
             ) { Text("Salvar") }
         },

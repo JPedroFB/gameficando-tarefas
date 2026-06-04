@@ -71,7 +71,7 @@ class GoalsViewModel(
 
     fun redeemGoal(goal: Goal) {
         viewModelScope.launch {
-            redemptionRepository.redeem(goal.id, goal.description, goal.pointsRequired)
+            redemptionRepository.redeem(goal.id, goal.description, goal.pointsRequired, goal.profileId)
         }
     }
 

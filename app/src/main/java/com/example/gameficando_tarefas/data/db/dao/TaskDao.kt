@@ -11,11 +11,11 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TaskDao {
-    @Query("SELECT * FROM tasks ORDER BY sortOrder ASC, id ASC")
-    fun getAllTasks(): Flow<List<TaskEntity>>
+    @Query("SELECT * FROM tasks WHERE profileId = :profileId ORDER BY sortOrder ASC, id ASC")
+    fun getAllTasks(profileId: Long): Flow<List<TaskEntity>>
 
-    @Query("SELECT COALESCE(MAX(sortOrder), -1) FROM tasks")
-    suspend fun getMaxSortOrder(): Int
+    @Query("SELECT COALESCE(MAX(sortOrder), -1) FROM tasks WHERE profileId = :profileId")
+    suspend fun getMaxSortOrder(profileId: Long): Int
 
     @Query("UPDATE tasks SET sortOrder = :sortOrder WHERE id = :id")
     suspend fun updateSortOrder(id: Long, sortOrder: Int)

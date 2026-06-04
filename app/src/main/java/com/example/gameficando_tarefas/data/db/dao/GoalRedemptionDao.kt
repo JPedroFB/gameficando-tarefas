@@ -12,12 +12,12 @@ interface GoalRedemptionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(redemption: GoalRedemptionEntity): Long
 
-    @Query("SELECT COALESCE(SUM(pointsCost), 0) FROM goal_redemptions")
-    fun getTotalRedemptionCost(): Flow<Int>
+    @Query("SELECT COALESCE(SUM(pointsCost), 0) FROM goal_redemptions WHERE profileId = :profileId")
+    fun getTotalRedemptionCost(profileId: Long): Flow<Int>
 
-    @Query("SELECT COUNT(*) > 0 FROM goal_redemptions WHERE goalId = :goalId")
-    fun isRedeemed(goalId: Long): Flow<Boolean>
+    @Query("SELECT COUNT(*) > 0 FROM goal_redemptions WHERE goalId = :goalId AND profileId = :profileId")
+    fun isRedeemed(goalId: Long, profileId: Long): Flow<Boolean>
 
-    @Query("SELECT * FROM goal_redemptions ORDER BY redeemedAt DESC")
-    fun getAllRedemptions(): Flow<List<GoalRedemptionEntity>>
+    @Query("SELECT * FROM goal_redemptions WHERE profileId = :profileId ORDER BY redeemedAt DESC")
+    fun getAllRedemptions(profileId: Long): Flow<List<GoalRedemptionEntity>>
 }
