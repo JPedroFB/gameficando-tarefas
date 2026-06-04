@@ -17,8 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.gameficando_tarefas.domain.model.Profile
+import com.example.gameficando_tarefas.ui.theme.GameficandotarefasTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,5 +71,29 @@ private fun ProfileBubble(
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+}
+
+// ────────────────────────────────
+// Previews
+// ────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "Profile Top Bar – profile 1 active")
+@Composable
+private fun ProfileTopBarP1Preview() {
+    val profiles = listOf(Profile(1, "Perfil 1"), Profile(2, "Perfil 2"))
+    GameficandotarefasTheme {
+        ProfileTopBar(profiles = profiles, activeProfileId = 1L, onSelectProfile = {})
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "Profile Top Bar – profile 2 active")
+@Composable
+private fun ProfileTopBarP2Preview() {
+    val profiles = listOf(Profile(1, "Perfil 1"), Profile(2, "Perfil 2"))
+    GameficandotarefasTheme {
+        ProfileTopBar(profiles = profiles, activeProfileId = 2L, onSelectProfile = {})
     }
 }

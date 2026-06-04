@@ -40,9 +40,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gameficando_tarefas.domain.model.Goal
+import com.example.gameficando_tarefas.ui.theme.GameficandotarefasTheme
 
 @Composable
 fun GoalsScreen(
@@ -247,4 +249,41 @@ private fun GoalDialog(
             TextButton(onClick = onDismiss) { Text("Cancelar") }
         }
     )
+}
+
+// ────────────────────────────────
+// Previews
+// ────────────────────────────────
+
+@Preview(showBackground = true, name = "Goal Item – locked")
+@Composable
+private fun GoalItemLockedPreview() {
+    GameficandotarefasTheme {
+        GoalItem(
+            goalState = GoalUiState(Goal(1, "Viagem para a praia", 500), canRedeem = false, isAchieved = false, isRedeemed = false),
+            onEdit = {}, onDelete = {}, onRedeem = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Goal Item – redeemable")
+@Composable
+private fun GoalItemRedeemablePreview() {
+    GameficandotarefasTheme {
+        GoalItem(
+            goalState = GoalUiState(Goal(1, "Novo fone de ouvido", 300), canRedeem = true, isAchieved = true, isRedeemed = false),
+            onEdit = {}, onDelete = {}, onRedeem = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Goal Item – redeemed")
+@Composable
+private fun GoalItemRedeemedPreview() {
+    GameficandotarefasTheme {
+        GoalItem(
+            goalState = GoalUiState(Goal(1, "Jantar especial", 200), canRedeem = false, isAchieved = true, isRedeemed = true),
+            onEdit = {}, onDelete = {}, onRedeem = {}
+        )
+    }
 }

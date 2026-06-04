@@ -34,9 +34,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.gameficando_tarefas.domain.model.Goal
+import com.example.gameficando_tarefas.domain.model.Task
 import com.example.gameficando_tarefas.domain.model.TaskFrequency
 import com.example.gameficando_tarefas.ui.home.TaskUiState
+import com.example.gameficando_tarefas.ui.theme.GameficandotarefasTheme
+
+@Preview(showBackground = true, name = "Points Banner")
+@Composable
+private fun PointsBannerPreview() {
+    GameficandotarefasTheme { PointsBanner(totalPoints = 350) }
+}
 
 @Composable
 fun PointsBanner(totalPoints: Int, modifier: Modifier = Modifier) {
@@ -62,6 +71,32 @@ fun PointsBanner(totalPoints: Int, modifier: Modifier = Modifier) {
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
+    }
+}
+
+@Preview(showBackground = true, name = "Goal Progress Card – with upcoming")
+@Composable
+private fun GoalProgressCardPreview() {
+    GameficandotarefasTheme {
+        GoalProgressCard(
+            goal = Goal(id = 1, description = "Viagem para a praia", pointsRequired = 500),
+            totalPoints = 320,
+            upcomingGoals = listOf(
+                Goal(id = 2, description = "Novo fone de ouvido", pointsRequired = 800),
+                Goal(id = 3, description = "Jantar especial", pointsRequired = 1000)
+            )
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Goal Progress Card – no upcoming")
+@Composable
+private fun GoalProgressCardSinglePreview() {
+    GameficandotarefasTheme {
+        GoalProgressCard(
+            goal = Goal(id = 1, description = "Último objetivo", pointsRequired = 200),
+            totalPoints = 50
+        )
     }
 }
 
@@ -124,7 +159,7 @@ fun GoalProgressCard(
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
                 progress = { progress },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().height(8.dp),
                 color = MaterialTheme.colorScheme.secondary
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -180,6 +215,40 @@ fun GoalProgressCard(
     }
 }
 
+@Preview(showBackground = true, name = "Task Card – active")
+@Composable
+private fun TaskCardActivePreview() {
+    GameficandotarefasTheme {
+        TaskCard(
+            taskState = TaskUiState(
+                task = Task(
+                    id = 1, description = "Beber 2L de água", pointsValue = 10,
+                    maxExecutions = 1, isFixed = false, frequency = TaskFrequency.DAILY
+                ),
+                executionsInPeriod = 0, isBlocked = false
+            ),
+            onExecute = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Task Card – blocked")
+@Composable
+private fun TaskCardBlockedPreview() {
+    GameficandotarefasTheme {
+        TaskCard(
+            taskState = TaskUiState(
+                task = Task(
+                    id = 2, description = "Exercitar 30min", pointsValue = 20,
+                    maxExecutions = 1, isFixed = false, frequency = TaskFrequency.DAILY
+                ),
+                executionsInPeriod = 1, isBlocked = true
+            ),
+            onExecute = {}
+        )
+    }
+}
+
 @Composable
 fun TaskCard(
     taskState: TaskUiState,
@@ -203,7 +272,9 @@ fun TaskCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Badge(containerColor = MaterialTheme.colorScheme.tertiaryContainer) {
+                    Badge(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    ) {
                         Text(
                             text = "+${task.pointsValue} pts",
                             color = MaterialTheme.colorScheme.onTertiaryContainer

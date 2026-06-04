@@ -27,9 +27,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gameficando_tarefas.domain.model.HistoryItem
+import com.example.gameficando_tarefas.ui.theme.GameficandotarefasTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -173,6 +175,74 @@ private fun HistoryItemRow(
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
+                }
+            }
+        }
+    }
+}
+
+// ────────────────────────────────
+// Previews
+// ────────────────────────────────
+
+@Preview(showBackground = true, name = "History Item – task completed")
+@Composable
+private fun HistoryItemTaskPreview() {
+    val fmt = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+    GameficandotarefasTheme {
+        HistoryItemRow(
+            item = HistoryItem.TaskCompleted(1, "Beber 2L de água 💧", 10, System.currentTimeMillis()),
+            timeFormatter = fmt
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "History Item – goal redeemed")
+@Composable
+private fun HistoryItemGoalPreview() {
+    val fmt = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+    GameficandotarefasTheme {
+        HistoryItemRow(
+            item = HistoryItem.GoalRedeemed(1, "Viagem para a praia 🏖️", 500, System.currentTimeMillis()),
+            timeFormatter = fmt
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "History Screen – with data")
+@Composable
+private fun HistoryScreenPreview() {
+    val now = System.currentTimeMillis()
+    val history = listOf(
+        HistoryItem.TaskCompleted(1, "Beber 2L de água 💧", 10, now),
+        HistoryItem.TaskCompleted(2, "Exercitar 30min 🏃", 20, now - 3_600_000),
+        HistoryItem.GoalRedeemed(1, "Viagem para a praia 🏖️", 500, now - 86_400_000)
+    )
+    val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    val timeFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
+    val grouped = history.groupBy { dateFormatter.format(Date(it.timestamp)) }
+        .entries.sortedByDescending { it.key }
+    GameficandotarefasTheme {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            grouped.forEach { (date, items) ->
+                item(key = "header_$date") {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            text = date,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                items(items, key = { "${it::class.simpleName}_${it.id}" }) { item ->
+                    HistoryItemRow(item = item, timeFormatter = timeFormatter)
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 }
             }
         }

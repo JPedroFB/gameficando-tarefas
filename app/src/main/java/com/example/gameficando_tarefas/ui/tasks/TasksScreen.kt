@@ -58,9 +58,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gameficando_tarefas.domain.model.Task
 import com.example.gameficando_tarefas.domain.model.TaskFrequency
+import com.example.gameficando_tarefas.ui.theme.GameficandotarefasTheme
 
 private const val FEATURED_COUNT = 3
 
@@ -459,4 +461,43 @@ private fun TaskDialog(
             TextButton(onClick = onDismiss) { Text("Cancelar") }
         }
     )
+}
+
+// ────────────────────────────────
+// Previews
+// ────────────────────────────────
+
+@Preview(showBackground = true, name = "Task Item – featured")
+@Composable
+private fun TaskItemFeaturedPreview() {
+    GameficandotarefasTheme {
+        TaskItem(
+            task = Task(1, "Beber água 💧", 5, 1, TaskFrequency.DAILY, false, 0, "💧"),
+            isFeatured = true, canMoveUp = false, canMoveDown = true,
+            onEdit = {}, onDelete = {}, onMoveUp = {}, onMoveDown = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Task Item – other")
+@Composable
+private fun TaskItemOtherPreview() {
+    GameficandotarefasTheme {
+        TaskItem(
+            task = Task(2, "Exercitar 30min 🏃", 20, 1, TaskFrequency.DAILY, false, 1, "🏃"),
+            isFeatured = false, canMoveUp = true, canMoveDown = true,
+            onEdit = {}, onDelete = {}, onMoveUp = {}, onMoveDown = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Section Header")
+@Composable
+private fun SectionHeaderPreview() {
+    GameficandotarefasTheme {
+        SectionHeader(
+            title = "⭐ Destaques — no widget",
+            subtitle = "As primeiras 3 tarefas aparecem na tela inicial"
+        )
+    }
 }
