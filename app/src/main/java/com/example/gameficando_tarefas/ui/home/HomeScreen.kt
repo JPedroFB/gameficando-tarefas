@@ -18,7 +18,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +31,7 @@ import com.example.gameficando_tarefas.domain.model.Goal
 import com.example.gameficando_tarefas.domain.model.Profile
 import com.example.gameficando_tarefas.domain.model.Task
 import com.example.gameficando_tarefas.domain.model.TaskFrequency
+import com.example.gameficando_tarefas.ui.components.FullScreenCelebration
 import com.example.gameficando_tarefas.ui.components.HomeDashboardCard
 import com.example.gameficando_tarefas.ui.components.TaskExecutionCard
 import com.example.gameficando_tarefas.ui.profile.ProfileBubble
@@ -48,6 +51,15 @@ private fun HomeScreenContent(
 ) {
     val dateFormatter = remember { SimpleDateFormat("EEEE, dd 'de' MMMM", Locale("pt", "BR")) }
     val today = remember { dateFormatter.format(Date()).replaceFirstChar { it.uppercase() } }
+    var showCelebration by remember { mutableStateOf(false) }
+    var redeemedGoalName by remember { mutableStateOf("") }
+
+    if (showCelebration) {
+        FullScreenCelebration(
+            goalDescription = redeemedGoalName,
+            onDismiss = { showCelebration = false }
+        )
+    }
 
     Column(
         modifier = modifier
@@ -65,7 +77,7 @@ private fun HomeScreenContent(
         ) {
             Column {
                 Text(
-                    text = "Olá, ${activeProfile?.name ?: "João"}! 👋",
+                    text = "Olá, ${activeProfile?.name ?: "João"}!",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -91,8 +103,12 @@ private fun HomeScreenContent(
             totalPoints = state.netPoints,
             streakDays = 12, // mock por enquanto
             currentGoal = state.nextGoal,
-            onRedeemGoal = onRedeem,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp),
+            onRedeemGoal = { goal ->
+                redeemedGoalName = goal.description
+                onRedeem(goal)
+                showCelebration = true
+            }
         )
 
         Spacer(modifier = Modifier.height(24.dp))

@@ -15,6 +15,7 @@ navigationCompose = "2.9.0"
 room = "2.7.1"
 material3WindowSizeClassAndroid = "1.5.0-alpha21"
 material3AdaptiveNavigationSuite = "1.5.0-alpha21"
+dotlottie = "0.14.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -44,6 +45,7 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.8.1" }
 androidx-compose-material3-window-size-class1-android = { group = "androidx.compose.material3", name = "material3-window-size-class-android", version.ref = "material3WindowSizeClassAndroid" }
 androidx-compose-material3-adaptive-navigation-suite = { group = "androidx.compose.material3", name = "material3-adaptive-navigation-suite", version.ref = "material3AdaptiveNavigationSuite" }
+dotlottie-android = { group = "com.github.LottieFiles", name = "dotlottie-android", version.ref = "dotlottie" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
