@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,7 +34,7 @@ import com.example.gameficando_tarefas.domain.model.Profile
 import com.example.gameficando_tarefas.domain.model.Task
 import com.example.gameficando_tarefas.domain.model.TaskFrequency
 import com.example.gameficando_tarefas.ui.components.FullScreenCelebration
-import com.example.gameficando_tarefas.ui.components.HomeDashboardCard
+import com.example.gameficando_tarefas.ui.components.GoalProgressCard
 import com.example.gameficando_tarefas.ui.components.TaskExecutionCard
 import com.example.gameficando_tarefas.ui.profile.ProfileBubble
 import com.example.gameficando_tarefas.ui.theme.GameficandotarefasTheme
@@ -98,18 +100,50 @@ private fun HomeScreenContent(
             }
         }
 
-        // Dashboard de Pontos e Objetivo
-        HomeDashboardCard(
-            totalPoints = state.netPoints,
-            streakDays = 12, // mock por enquanto
-            currentGoal = state.nextGoal,
-            modifier = Modifier.padding(horizontal = 16.dp),
-            onRedeemGoal = { goal ->
-                redeemedGoalName = goal.description
-                onRedeem(goal)
-                showCelebration = true
+        if (state.nextGoal != null) {
+            GoalProgressCard(
+                goal = state.nextGoal,
+                totalPoints = state.netPoints,
+                streakDays = 12, // Mock
+                upcomingGoals = state.upcomingGoals,
+                modifier = Modifier.padding(horizontal = 16.dp),
+                onRedeem = {
+                    redeemedGoalName = state.nextGoal.description
+                    onRedeem(state.nextGoal)
+                    showCelebration = true
+                }
+            )
+        } else {
+            // Card simples apenas com pontos se não houver objetivo
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+                ),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = "Seus pontos",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                    )
+                    val formattedPoints = state.netPoints.toString().replace("(?<=\\d)(?=(\\d{3})+(?!\\d))", ".")
+                    Text(
+                        text = "$formattedPoints pts",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Nenhum objetivo definido no momento.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
             }
-        )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
