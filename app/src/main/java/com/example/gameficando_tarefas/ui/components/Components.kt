@@ -5,8 +5,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -25,12 +24,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
@@ -55,23 +54,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.input.pointer.pointerInput
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.rememberCoroutineScope
 import com.example.gameficando_tarefas.domain.model.Goal
 import com.example.gameficando_tarefas.domain.model.Task
 import com.example.gameficando_tarefas.domain.model.TaskFrequency
 import com.example.gameficando_tarefas.ui.home.TaskUiState
 import com.example.gameficando_tarefas.ui.theme.GameficandotarefasTheme
 
-@Preview(showBackground = true, name = "Home Dashboard Card")
+@Preview(showBackground = true, name = "Home Dashboard Card - In Progress")
 @Composable
 private fun HomeDashboardCardPreview() {
     GameficandotarefasTheme {
@@ -83,11 +78,24 @@ private fun HomeDashboardCardPreview() {
     }
 }
 
+@Preview(showBackground = true, name = "Home Dashboard Card - Achieved")
+@Composable
+private fun HomeDashboardCardAchievedPreview() {
+    GameficandotarefasTheme {
+        HomeDashboardCard(
+            totalPoints = 5500,
+            streakDays = 15,
+            currentGoal = Goal(id = 1, description = "Nintendo Switch 2", pointsRequired = 5000)
+        )
+    }
+}
+
 @Composable
 fun HomeDashboardCard(
     totalPoints: Int,
     streakDays: Int,
     currentGoal: Goal?,
+    onRedeemGoal: (Goal) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -173,6 +181,7 @@ fun HomeDashboardCard(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 if (currentGoal != null) {
+                    val isGoalAchieved = totalPoints >= currentGoal.pointsRequired
                     val progress = (totalPoints.toFloat() / currentGoal.pointsRequired).coerceIn(0f, 1f)
                     
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -203,34 +212,53 @@ fun HomeDashboardCard(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    LinearProgressIndicator(
-                        progress = { progress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(CircleShape),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        strokeCap = StrokeCap.Round
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "$totalPoints / ${currentGoal.pointsRequired}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.outline
-                        )
-                        Text(
-                            text = "${(progress * 100).toInt()}% concluído",
-                            style = MaterialTheme.typography.labelSmall,
+                    if (isGoalAchieved) {
+                        // Botão de Coletar quando a meta é atingida
+                        Button(
+                            onClick = { onRedeemGoal(currentGoal) },
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Text(
+                                text = "Coletar prêmio!",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    } else {
+                        // Barra de progresso enquanto não atinge a meta
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(CircleShape),
                             color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold
+                            trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            strokeCap = StrokeCap.Round
                         )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "$totalPoints / ${currentGoal.pointsRequired}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.outline
+                            )
+                            Text(
+                                text = "${(progress * 100).toInt()}% concluído",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 } else {
                     Box(

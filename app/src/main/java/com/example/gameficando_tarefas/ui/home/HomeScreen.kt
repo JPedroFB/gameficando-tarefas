@@ -42,6 +42,7 @@ private fun HomeScreenContent(
     state: HomeUiState,
     activeProfile: Profile?,
     onExecute: (Task) -> Unit = {},
+    onRedeem: (Goal) -> Unit = {},
     contentPadding: PaddingValues = PaddingValues(),
     modifier: Modifier = Modifier
 ) {
@@ -90,6 +91,7 @@ private fun HomeScreenContent(
             totalPoints = state.netPoints,
             streakDays = 12, // mock por enquanto
             currentGoal = state.nextGoal,
+            onRedeemGoal = onRedeem,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
@@ -175,6 +177,7 @@ fun HomeScreen(
         state = state,
         activeProfile = activeProfile,
         onExecute = viewModel::executeTask,
+        onRedeem = viewModel::redeemGoal,
         contentPadding = contentPadding,
         modifier = modifier
     )
