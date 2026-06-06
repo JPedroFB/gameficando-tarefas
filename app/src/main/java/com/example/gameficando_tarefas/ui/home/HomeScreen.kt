@@ -13,11 +13,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +46,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HomeScreenContent(
     state: HomeUiState,
@@ -63,131 +68,135 @@ private fun HomeScreenContent(
         )
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.onPrimary)
-            .padding(top = contentPadding.calculateTopPadding())
-    ) {
-        // Header: Saudação e Data
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
-        ) {
-            Column {
-                Text(
-                    text = "Olá, ${activeProfile?.name ?: "João"}!",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = today,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
-            
-            activeProfile?.let {
-                ProfileBubble(
-                    label = it.name.filter { c -> c.isDigit() }.ifBlank { it.name.take(1) },
-                    active = true,
-                    onClick = {}
-                )
-            }
-        }
+    val scaffoldState = rememberBottomSheetScaffoldState()
 
-        if (state.nextGoal != null) {
-            GoalProgressCard(
-                goal = state.nextGoal,
-                totalPoints = state.netPoints,
-                streakDays = 12, // Mock
-                upcomingGoals = state.upcomingGoals,
-                modifier = Modifier.padding(horizontal = 16.dp),
-                onRedeem = {
-                    redeemedGoalName = state.nextGoal.description
-                    onRedeem(state.nextGoal)
-                    showCelebration = true
-                }
-            )
-        } else {
-            // Card simples apenas com pontos se não houver objetivo
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
-                ),
-                shape = RoundedCornerShape(24.dp)
+    BottomSheetScaffold(
+        modifier = modifier.padding(bottom = contentPadding.calculateBottomPadding()),
+        scaffoldState = scaffoldState,
+        sheetPeekHeight = 390.dp,
+        sheetShape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        sheetContainerColor = MaterialTheme.colorScheme.surface,
+        sheetTonalElevation = 12.dp,
+        sheetDragHandle = { BottomSheetDefaults.DragHandle() },
+        sheetContent = {
+            // Conteúdo do "Sheet" de Tarefas
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp)
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    text = "Tarefas de hoje",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (state.tasks.isEmpty()) {
                     Text(
-                        text = "Seus pontos",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                        text = "Nenhuma tarefa para hoje! 🎉",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.padding(vertical = 32.dp)
                     )
-                    val formattedPoints = state.netPoints.toString().replace("(?<=\\d)(?=(\\d{3})+(?!\\d))", ".")
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(bottom = 24.dp)
+                    ) {
+                        items(state.tasks, key = { it.task.id }) { taskState ->
+                            TaskExecutionCard(
+                                taskState = taskState,
+                                onExecute = { onExecute(taskState.task) }
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.onPrimary // Fundo principal
+    ) { innerScaffoldPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = contentPadding.calculateTopPadding())
+        ) {
+            // Header: Saudação e Data
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column {
                     Text(
-                        text = "$formattedPoints pts",
+                        text = "Olá, ${activeProfile?.name ?: "João"}!",
                         style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.primary
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Nenhum objetivo definido no momento.",
-                        style = MaterialTheme.typography.bodySmall,
+                        text = today,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.outline
                     )
                 }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // "Sheet" de Tarefas
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-            shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
-        ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(24.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                item {
-                    Text(
-                        text = "Tarefas de hoje",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                
+                activeProfile?.let {
+                    ProfileBubble(
+                        label = it.name.filter { c -> c.isDigit() }.ifBlank { it.name.take(1) },
+                        active = true,
+                        onClick = {}
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
+            }
 
-                if (state.tasks.isEmpty()) {
-                    item {
+            if (state.nextGoal != null) {
+                GoalProgressCard(
+                    goal = state.nextGoal,
+                    totalPoints = state.netPoints,
+                    streakDays = 12, // Mock
+                    upcomingGoals = state.upcomingGoals,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    onRedeem = {
+                        redeemedGoalName = state.nextGoal.description
+                        onRedeem(state.nextGoal)
+                        showCelebration = true
+                    }
+                )
+            } else {
+                // Card simples apenas com pontos se não houver objetivo
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+                    ),
+                    shape = RoundedCornerShape(24.dp)
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
                         Text(
-                            text = "Nenhuma tarefa para hoje! 🎉",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.outline,
-                            modifier = Modifier.padding(vertical = 32.dp)
+                            text = "Seus pontos",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                        )
+                        val formattedPoints = state.netPoints.toString().replace("(?<=\\d)(?=(\\d{3})+(?!\\d))", ".")
+                        Text(
+                            text = "$formattedPoints pts",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Nenhum objetivo definido no momento.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline
                         )
                     }
-                }
-
-                items(state.tasks, key = { it.task.id }) { taskState ->
-                    TaskExecutionCard(
-                        taskState = taskState,
-                        onExecute = { onExecute(taskState.task) }
-                    )
-                }
-                
-                item { 
-                    Spacer(modifier = Modifier.height(contentPadding.calculateBottomPadding() + 40.dp)) 
                 }
             }
         }
