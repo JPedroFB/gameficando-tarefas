@@ -4,5 +4,6 @@ data class Goal(
     val id: Long = 0,
     val description: String,
     val pointsRequired: Int,
+    val iconEmoji: String = "🎯",
     val profileId: Long = 0
 )

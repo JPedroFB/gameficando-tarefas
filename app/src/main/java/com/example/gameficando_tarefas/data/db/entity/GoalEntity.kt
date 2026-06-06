@@ -13,12 +13,14 @@ data class GoalEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val description: String,
     val pointsRequired: Int,
+    val iconEmoji: String = "🎯",
     val profileId: Long = 1
 ) {
     fun toDomain() = Goal(
         id = id,
         description = description,
         pointsRequired = pointsRequired,
+        iconEmoji = iconEmoji,
         profileId = profileId
     )
 
@@ -27,6 +29,7 @@ data class GoalEntity(
             id = goal.id,
             description = goal.description,
             pointsRequired = goal.pointsRequired,
+            iconEmoji = goal.iconEmoji,
             profileId = goal.profileId
         )
     }

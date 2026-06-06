@@ -1,5 +1,8 @@
 package com.example.gameficando_tarefas.ui.goals
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,8 +13,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -37,14 +44,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gameficando_tarefas.domain.model.Goal
 import com.example.gameficando_tarefas.ui.theme.GameficandotarefasTheme
+
+private val GOAL_EMOJIS = listOf(
+    "🎯", "🎮", "🏖️", "✈️", "🚗", "🚲", "🏠", "💻", "📱", "🎧",
+    "👟", "👕", "⌚", "📚", "🍳", "🎸", "🎨", "🎁", "💰", "🌟"
+)
 
 @Composable
 fun GoalsScreen(
@@ -131,66 +146,78 @@ private fun GoalItem(
     Card(
         colors = CardDefaults.cardColors(
             containerColor = when {
-                goalState.isRedeemed -> MaterialTheme.colorScheme.secondaryContainer
+                goalState.isRedeemed -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
                 goalState.isAchieved -> MaterialTheme.colorScheme.tertiaryContainer
                 else -> MaterialTheme.colorScheme.surface
             }
-        )
+        ),
+        shape = RoundedCornerShape(16.dp),
+        border = if (goalState.isAchieved || goalState.isRedeemed) null else CardDefaults.outlinedCardBorder()
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            // Icon
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (goalState.isRedeemed) {
-                            Text("✅ ", style = MaterialTheme.typography.titleMedium)
-                        }
-                        Text(
-                            text = goal.description,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Badge(containerColor = MaterialTheme.colorScheme.primaryContainer) {
-                        Text(
-                            text = "${goal.pointsRequired} pts",
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
+                Text(text = goal.iconEmoji, fontSize = 24.sp)
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = goal.description,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Badge(containerColor = MaterialTheme.colorScheme.primaryContainer) {
+                    Text(
+                        text = "${goal.pointsRequired} pts",
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
-                Row {
-                    IconButton(onClick = onEdit) {
-                        Icon(Icons.Filled.Edit, contentDescription = "Editar")
-                    }
-                    IconButton(onClick = onDelete) {
-                        Icon(Icons.Filled.Delete, contentDescription = "Excluir")
+                
+                if (goalState.isRedeemed) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Coletado ✅",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.secondary,
+                        fontWeight = FontWeight.Bold
+                    )
+                } else if (goalState.canRedeem) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = onRedeem,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        ),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                        modifier = Modifier.height(32.dp)
+                    ) {
+                        Text("Coletar", style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
-            if (goalState.isRedeemed) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Coletado ✅",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            } else if (goalState.canRedeem) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = onRedeem,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary
-                    )
-                ) {
-                    Text("Coletar (−${goal.pointsRequired} pts)")
+
+            Row {
+                IconButton(onClick = onEdit) {
+                    Icon(Icons.Filled.Edit, contentDescription = "Editar", modifier = Modifier.size(20.dp))
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Filled.Delete, contentDescription = "Excluir", modifier = Modifier.size(20.dp))
                 }
             }
         }
@@ -205,16 +232,48 @@ private fun GoalDialog(
 ) {
     var description by remember { mutableStateOf(initial?.description ?: "") }
     var pointsText by remember { mutableStateOf(initial?.pointsRequired?.toString() ?: "") }
+    var selectedEmoji by remember { mutableStateOf(initial?.iconEmoji ?: "🎯") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (initial == null) "Novo Objetivo" else "Editar Objetivo") },
         text = {
             Column {
+                Text(
+                    text = "Ícone",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(GOAL_EMOJIS) { emoji ->
+                        val isSelected = emoji == selectedEmoji
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
+                                .border(
+                                    width = if (isSelected) 2.dp else 1.dp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .clickable { selectedEmoji = emoji }
+                                .padding(4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = emoji, fontSize = 24.sp)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
                     label = { Text("Descrição") },
+                    leadingIcon = { Text(selectedEmoji, fontSize = 18.sp) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -239,6 +298,7 @@ private fun GoalDialog(
                             id = initial?.id ?: 0,
                             description = description.trim(),
                             pointsRequired = pts,
+                            iconEmoji = selectedEmoji,
                             profileId = initial?.profileId ?: 0
                         )
                     )
@@ -260,29 +320,7 @@ private fun GoalDialog(
 private fun GoalItemLockedPreview() {
     GameficandotarefasTheme {
         GoalItem(
-            goalState = GoalUiState(Goal(1, "Viagem para a praia", 500), canRedeem = false, isAchieved = false, isRedeemed = false),
-            onEdit = {}, onDelete = {}, onRedeem = {}
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "Goal Item – redeemable")
-@Composable
-private fun GoalItemRedeemablePreview() {
-    GameficandotarefasTheme {
-        GoalItem(
-            goalState = GoalUiState(Goal(1, "Novo fone de ouvido", 300), canRedeem = true, isAchieved = true, isRedeemed = false),
-            onEdit = {}, onDelete = {}, onRedeem = {}
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "Goal Item – redeemed")
-@Composable
-private fun GoalItemRedeemedPreview() {
-    GameficandotarefasTheme {
-        GoalItem(
-            goalState = GoalUiState(Goal(1, "Jantar especial", 200), canRedeem = false, isAchieved = true, isRedeemed = true),
+            goalState = GoalUiState(Goal(1, "Viagem para a praia", 500, "🏖️"), canRedeem = false, isAchieved = false, isRedeemed = false),
             onEdit = {}, onDelete = {}, onRedeem = {}
         )
     }

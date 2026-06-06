@@ -50,7 +50,7 @@ fun ProfileTopBar(
 }
 
 @Composable
-private fun ProfileBubble(
+fun ProfileBubble(
     label: String,
     active: Boolean,
     onClick: () -> Unit

@@ -58,20 +58,25 @@ fun AppNavigation(
     val currentDestination = backStackEntry?.destination
 
     val navItems = listOf(
-        Triple(Home, "Início", Icons.Filled.Home),
+        Triple(Home, "Hoje", Icons.Filled.Home),
         Triple(Goals, "Objetivos", Icons.Filled.Star),
         Triple(Tasks, "Tarefas", Icons.AutoMirrored.Filled.List),
-        Triple(History, "Histórico", Icons.Filled.History)
+        Triple(History, "Perfil", Icons.Filled.History) // O print mostra "Perfil" no último item
     )
+
+    val activeProfile = profileState.profiles.find { it.id == profileState.activeProfileId }
+    val showTopBar = currentDestination?.hasRoute(Home::class) == false
 
     Scaffold(
         modifier = modifier,
         topBar = {
-            ProfileTopBar(
-                profiles = profileState.profiles,
-                activeProfileId = profileState.activeProfileId,
-                onSelectProfile = profileVm::setActiveProfile
-            )
+            if (showTopBar) {
+                ProfileTopBar(
+                    profiles = profileState.profiles,
+                    activeProfileId = profileState.activeProfileId,
+                    onSelectProfile = profileVm::setActiveProfile
+                )
+            }
         },
         bottomBar = {
             NavigationBar {
@@ -100,7 +105,11 @@ fun AppNavigation(
                 val vm: HomeViewModel = viewModel(
                     factory = HomeViewModel.Factory(taskRepository, goalRepository, redemptionRepository)
                 )
-                HomeScreen(viewModel = vm, contentPadding = innerPadding)
+                HomeScreen(
+                    viewModel = vm,
+                    activeProfile = activeProfile,
+                    contentPadding = innerPadding
+                )
             }
             composable<Goals> {
                 val vm: GoalsViewModel = viewModel(

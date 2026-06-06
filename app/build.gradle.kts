@@ -7,16 +7,12 @@ plugins {
 
 android {
     namespace = "com.example.gameficando_tarefas"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.gameficando_tarefas"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -46,6 +42,8 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
+    implementation(libs.androidx.compose.material3.window.size.class1.android)
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
