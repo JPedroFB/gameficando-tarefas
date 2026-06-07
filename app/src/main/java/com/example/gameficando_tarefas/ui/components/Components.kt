@@ -1,10 +1,16 @@
 package com.example.gameficando_tarefas.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -37,9 +43,11 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.toPath
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,12 +57,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.center
+import androidx.compose.ui.graphics.Matrix
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -68,6 +84,37 @@ import com.lottiefiles.dotlottie.core.compose.runtime.DotLottieController
 import com.lottiefiles.dotlottie.core.compose.ui.DotLottieAnimation
 import com.lottiefiles.dotlottie.core.util.DotLottieEventListener
 import com.lottiefiles.dotlottie.core.util.DotLottieSource
+import androidx.graphics.shapes.Morph
+import androidx.graphics.shapes.RoundedPolygon
+
+@Composable
+fun AnimatedEmoji(
+    emoji: String,
+    modifier: Modifier = Modifier
+) {
+    if (emoji.isBlank()) return
+    
+    val unicodeHex = remember(emoji) {
+        val codePoints = mutableListOf<Int>()
+        var i = 0
+        while (i < emoji.length) {
+            val cp = emoji.codePointAt(i)
+            codePoints.add(cp)
+            i += Character.charCount(cp)
+        }
+        // Noto Emoji Animation URL pattern
+        Integer.toHexString(codePoints[0]).lowercase()
+    }
+
+    val url = "https://fonts.gstatic.com/s/e/notoemoji/latest/$unicodeHex/lottie.json"
+
+    DotLottieAnimation(
+        source = DotLottieSource.Url(url),
+        autoplay = true,
+        loop = true,
+        modifier = modifier
+    )
+}
 
 @Composable
 fun FullScreenCelebration(
@@ -243,8 +290,8 @@ fun TaskExecutionCard(
             color = MaterialTheme.colorScheme.secondaryContainer,
             shape = RoundedCornerShape(24.dp)
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(text = task.iconEmoji, fontSize = 30.sp)
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(8.dp)) {
+                AnimatedEmoji(emoji = task.iconEmoji, modifier = Modifier.fillMaxSize())
             }
         }
 
@@ -380,11 +427,9 @@ fun GoalProgressCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Star,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.secondary
-                )
+                Box(modifier = Modifier.size(24.dp)) {
+                    AnimatedEmoji(emoji = goal.iconEmoji, modifier = Modifier.fillMaxSize())
+                }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Próximo Objetivo",
@@ -470,15 +515,73 @@ fun GoalProgressCard(
                     modifier = Modifier.size(110.dp)
                 ) {
                     if (isAchieved) {
-                        // Botão redondo para coleta
+                        val infiniteTransition = rememberInfiniteTransition(label = "collect_animation")
+                        val rotation by infiniteTransition.animateFloat(
+                            initialValue = 0f,
+                            targetValue = 360f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(6000, easing = LinearEasing)
+                            ),
+                            label = "rotation"
+                        )
+                        
+                        val shapes = remember {
+                            listOf(
+                                MaterialShapes.Circle,
+                                MaterialShapes.Puffy,
+                                MaterialShapes.Flower,
+                                MaterialShapes.Cookie12Sided,
+                                MaterialShapes.Circle
+                            )
+                        }
+                        
+                        val morphProgress by infiniteTransition.animateFloat(
+                            initialValue = 0f,
+                            targetValue = (shapes.size - 1).toFloat(),
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(10000, easing = LinearEasing),
+                                repeatMode = RepeatMode.Restart
+                            ),
+                            label = "morph_progress"
+                        )
+                        
+                        val morphingShape = remember(morphProgress) {
+                            val index = morphProgress.toInt().coerceIn(0, shapes.size - 2)
+                            val localProgress = morphProgress - index
+                            val morph = Morph(shapes[index], shapes[index + 1])
+                            
+                            object : Shape {
+                                override fun createOutline(
+                                    size: Size,
+                                    layoutDirection: LayoutDirection,
+                                    density: Density
+                                ): Outline {
+                                    val path = morph.toPath(progress = localProgress)
+                                    val matrix = Matrix().apply { scale(size.width, size.height) }
+                                    path.transform(matrix)
+                                    path.translate(size.center - path.getBounds().center)
+                                    return Outline.Generic(path)
+                                }
+                            }
+                        }
+
+                        // Botão animado com morfagem entre formatos esféricos M3 e rotação
                         Surface(
                             onClick = onRedeem,
-                            modifier = Modifier.fillMaxSize().bounceClick { onRedeem() },
-                            shape = CircleShape,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer { rotationZ = rotation }
+                                .bounceClick { onRedeem() },
+                            shape = morphingShape,
                             color = MaterialTheme.colorScheme.primary,
-                            shadowElevation = 4.dp
+                            shadowElevation = 6.dp
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .graphicsLayer { rotationZ = -rotation },
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(
                                         text = "COLETAR",
@@ -486,10 +589,9 @@ fun GoalProgressCard(
                                         fontWeight = FontWeight.ExtraBold,
                                         color = MaterialTheme.colorScheme.onPrimary
                                     )
-                                    Text(
-                                        text = "🎁",
-                                        fontSize = 24.sp
-                                    )
+                                    Box(modifier = Modifier.size(32.dp)) {
+                                        AnimatedEmoji(emoji = "🎁", modifier = Modifier.fillMaxSize())
+                                    }
                                 }
                             }
                         }

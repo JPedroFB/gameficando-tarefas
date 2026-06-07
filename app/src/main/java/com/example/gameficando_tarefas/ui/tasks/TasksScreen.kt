@@ -62,6 +62,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gameficando_tarefas.domain.model.Task
 import com.example.gameficando_tarefas.domain.model.TaskFrequency
+import com.example.gameficando_tarefas.ui.components.AnimatedEmoji
 import com.example.gameficando_tarefas.ui.theme.GameficandotarefasTheme
 
 private const val FEATURED_COUNT = 3
@@ -252,7 +253,7 @@ private fun TaskItem(
                     .clip(RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = task.iconEmoji, fontSize = 22.sp)
+                AnimatedEmoji(emoji = task.iconEmoji, modifier = Modifier.fillMaxSize())
             }
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -359,7 +360,7 @@ private fun TaskDialog(
                                 .padding(4.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = emoji, fontSize = 20.sp)
+                            AnimatedEmoji(emoji = emoji, modifier = Modifier.fillMaxSize())
                         }
                     }
                 }
@@ -368,7 +369,11 @@ private fun TaskDialog(
                     value = description,
                     onValueChange = { description = it },
                     label = { Text("Descrição") },
-                    leadingIcon = { Text(selectedEmoji, fontSize = 18.sp) },
+                    leadingIcon = { 
+                        Box(modifier = Modifier.size(24.dp)) {
+                            AnimatedEmoji(emoji = selectedEmoji, modifier = Modifier.fillMaxSize())
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )

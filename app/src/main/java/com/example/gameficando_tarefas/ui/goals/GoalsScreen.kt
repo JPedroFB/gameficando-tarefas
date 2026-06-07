@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gameficando_tarefas.domain.model.Goal
+import com.example.gameficando_tarefas.ui.components.AnimatedEmoji
 import com.example.gameficando_tarefas.ui.theme.GameficandotarefasTheme
 
 private val GOAL_EMOJIS = listOf(
@@ -73,12 +74,17 @@ fun GoalsScreen(
 
     Box(modifier = modifier.fillMaxSize()) {
         if (goals.isEmpty()) {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(contentPadding),
-                contentAlignment = Alignment.Center
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
+                Box(modifier = Modifier.size(80.dp)) {
+                    AnimatedEmoji(emoji = "🎯", modifier = Modifier.fillMaxSize())
+                }
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "Nenhum objetivo cadastrado.\nToque em + para adicionar.",
                     style = MaterialTheme.typography.bodyMedium,
@@ -168,7 +174,7 @@ private fun GoalItem(
                     .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = goal.iconEmoji, fontSize = 24.sp)
+                AnimatedEmoji(emoji = goal.iconEmoji, modifier = Modifier.fillMaxSize().padding(8.dp))
             }
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -262,7 +268,7 @@ private fun GoalDialog(
                                 .padding(4.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = emoji, fontSize = 24.sp)
+                            AnimatedEmoji(emoji = emoji, modifier = Modifier.fillMaxSize())
                         }
                     }
                 }
@@ -273,7 +279,11 @@ private fun GoalDialog(
                     value = description,
                     onValueChange = { description = it },
                     label = { Text("Descrição") },
-                    leadingIcon = { Text(selectedEmoji, fontSize = 18.sp) },
+                    leadingIcon = { 
+                        Box(modifier = Modifier.size(24.dp)) {
+                            AnimatedEmoji(emoji = selectedEmoji, modifier = Modifier.fillMaxSize())
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )

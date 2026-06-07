@@ -2,6 +2,7 @@ package com.example.gameficando_tarefas.ui.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,6 +39,7 @@ import com.example.gameficando_tarefas.domain.model.Goal
 import com.example.gameficando_tarefas.domain.model.Profile
 import com.example.gameficando_tarefas.domain.model.Task
 import com.example.gameficando_tarefas.domain.model.TaskFrequency
+import com.example.gameficando_tarefas.ui.components.AnimatedEmoji
 import com.example.gameficando_tarefas.ui.components.FullScreenCelebration
 import com.example.gameficando_tarefas.ui.components.GoalProgressCard
 import com.example.gameficando_tarefas.ui.components.TaskExecutionCard
@@ -73,7 +76,7 @@ private fun HomeScreenContent(
     BottomSheetScaffold(
         modifier = modifier.padding(bottom = contentPadding.calculateBottomPadding()),
         scaffoldState = scaffoldState,
-        sheetPeekHeight = 390.dp,
+        sheetPeekHeight = 460.dp,
         sheetShape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
         sheetContainerColor = MaterialTheme.colorScheme.surface,
         sheetTonalElevation = 12.dp,
@@ -95,12 +98,20 @@ private fun HomeScreenContent(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 if (state.tasks.isEmpty()) {
-                    Text(
-                        text = "Nenhuma tarefa para hoje! 🎉",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.outline,
-                        modifier = Modifier.padding(vertical = 32.dp)
-                    )
+                    Column(
+                        modifier = Modifier.padding(vertical = 32.dp).fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Nenhuma tarefa para hoje!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Box(modifier = Modifier.size(64.dp)) {
+                            AnimatedEmoji(emoji = "🎉", modifier = Modifier.fillMaxSize())
+                        }
+                    }
                 } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
