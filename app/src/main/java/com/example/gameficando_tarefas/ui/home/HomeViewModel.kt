@@ -31,7 +31,8 @@ data class HomeUiState(
     val nextGoal: Goal? = null,
     val canRedeemNextGoal: Boolean = false,
     val upcomingGoals: List<Goal> = emptyList(),
-    val tasks: List<TaskUiState> = emptyList()
+    val tasks: List<TaskUiState> = emptyList(),
+    val streakDays: Int = 0
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -46,7 +47,8 @@ class HomeViewModel(
         redemptionRepository.getTotalRedemptionCost(),
         redemptionRepository.getAllRedemptions(),
         goalRepository.getAllGoals(),
-        taskRepository.getAllTasks()
+        taskRepository.getAllTasks(),
+        taskRepository.getExecutionHistory()
     ) { values ->
         val taskPoints = values[0] as Int
         val redemptionCost = values[1] as Int
@@ -56,17 +58,25 @@ class HomeViewModel(
         val goals = values[3] as List<com.example.gameficando_tarefas.domain.model.Goal>
         @Suppress("UNCHECKED_CAST")
         val tasks = values[4] as List<Task>
+        @Suppress("UNCHECKED_CAST")
+        val history = values[5] as List<com.example.gameficando_tarefas.data.db.dao.TaskExecutionHistory>
+
         val netPoints = taskPoints - redemptionCost
         val redeemedIds = redemptions.map { it.goalId }.toSet()
         val sortedGoals = goals.sortedBy { it.pointsRequired }.filter { it.id !in redeemedIds }
         val nextGoal = sortedGoals.firstOrNull()
         val upcomingGoals = sortedGoals.drop(1).take(4)
         val canRedeem = nextGoal != null && netPoints >= nextGoal.pointsRequired
-        Triple(netPoints, Triple(nextGoal, canRedeem, upcomingGoals), tasks)
-    }.flatMapLatest { (netPoints, nextGoalData, tasks) ->
+        
+        val streak = calculateStreak(history)
+        
+        data class Intermediate(val netPoints: Int, val nextGoalData: Triple<Goal?, Boolean, List<Goal>>, val tasks: List<Task>, val streak: Int)
+        Intermediate(netPoints, Triple(nextGoal, canRedeem, upcomingGoals), tasks, streak)
+    }.flatMapLatest { intermediate ->
+        val (netPoints, nextGoalData, tasks, streak) = intermediate
         val (nextGoal, canRedeem, upcomingGoals) = nextGoalData
         if (tasks.isEmpty()) {
-            flowOf(HomeUiState(netPoints, nextGoal, canRedeem, upcomingGoals, emptyList()))
+            flowOf(HomeUiState(netPoints, nextGoal, canRedeem, upcomingGoals, emptyList(), streak))
         } else {
             val executionFlows = tasks.map { task ->
                 val since = periodStart(task.frequency)
@@ -80,7 +90,7 @@ class HomeViewModel(
                     }
             }
             combine(executionFlows) { taskStates ->
-                HomeUiState(netPoints, nextGoal, canRedeem, upcomingGoals, taskStates.toList())
+                HomeUiState(netPoints, nextGoal, canRedeem, upcomingGoals, taskStates.toList(), streak)
             }
         }
     }.stateIn(
@@ -88,6 +98,48 @@ class HomeViewModel(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = HomeUiState()
     )
+
+    private fun calculateStreak(history: List<com.example.gameficando_tarefas.data.db.dao.TaskExecutionHistory>): Int {
+        if (history.isEmpty()) return 0
+
+        val calendar = Calendar.getInstance()
+        
+        // Formata para String YYYY-MM-DD para agrupar por dia
+        val uniqueDates = history.map {
+            calendar.timeInMillis = it.executedAt
+            val y = calendar.get(Calendar.YEAR)
+            val m = calendar.get(Calendar.MONTH)
+            val d = calendar.get(Calendar.DAY_OF_MONTH)
+            "$y-$m-$d"
+        }.toSet()
+
+        var streak = 0
+        val checkCalendar = Calendar.getInstance()
+        
+        // Verifica hoje
+        var currentDayKey = "${checkCalendar.get(Calendar.YEAR)}-${checkCalendar.get(Calendar.MONTH)}-${checkCalendar.get(Calendar.DAY_OF_MONTH)}"
+        
+        if (currentDayKey in uniqueDates) {
+            // Se hoje tem pontos, começa a contar de hoje
+            while (currentDayKey in uniqueDates) {
+                streak++
+                checkCalendar.add(Calendar.DAY_OF_YEAR, -1)
+                currentDayKey = "${checkCalendar.get(Calendar.YEAR)}-${checkCalendar.get(Calendar.MONTH)}-${checkCalendar.get(Calendar.DAY_OF_MONTH)}"
+            }
+        } else {
+            // Se hoje não tem pontos, verifica se ontem teve
+            checkCalendar.add(Calendar.DAY_OF_YEAR, -1)
+            currentDayKey = "${checkCalendar.get(Calendar.YEAR)}-${checkCalendar.get(Calendar.MONTH)}-${checkCalendar.get(Calendar.DAY_OF_MONTH)}"
+            
+            while (currentDayKey in uniqueDates) {
+                streak++
+                checkCalendar.add(Calendar.DAY_OF_YEAR, -1)
+                currentDayKey = "${checkCalendar.get(Calendar.YEAR)}-${checkCalendar.get(Calendar.MONTH)}-${checkCalendar.get(Calendar.DAY_OF_MONTH)}"
+            }
+        }
+
+        return streak
+    }
 
     fun executeTask(task: Task) {
         viewModelScope.launch {

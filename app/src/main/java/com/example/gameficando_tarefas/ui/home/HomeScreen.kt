@@ -189,7 +189,7 @@ private fun HomeScreenContent(
                     GoalProgressCard(
                         goal = state.nextGoal,
                         totalPoints = state.netPoints,
-                        streakDays = 12, // Mock
+                        streakDays = state.streakDays,
                         upcomingGoals = state.upcomingGoals,
                         modifier = Modifier.padding(horizontal = 16.dp),
                         onRedeem = {
