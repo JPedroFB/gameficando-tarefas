@@ -49,7 +49,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.toPath
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -65,6 +68,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -90,7 +95,8 @@ import androidx.graphics.shapes.RoundedPolygon
 @Composable
 fun AnimatedEmoji(
     emoji: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    playTrigger: Int = 0
 ) {
     if (emoji.isBlank()) return
     
@@ -102,16 +108,40 @@ fun AnimatedEmoji(
             codePoints.add(cp)
             i += Character.charCount(cp)
         }
-        // Noto Emoji Animation URL pattern
         Integer.toHexString(codePoints[0]).lowercase()
     }
 
     val url = "https://fonts.gstatic.com/s/e/notoemoji/latest/$unicodeHex/lottie.json"
+    val controller = remember { DotLottieController() }
+    
+    // Usamos um estado interno para contar os loops e parar
+    var loopCount by remember(emoji, playTrigger) { mutableIntStateOf(0) }
+
+    LaunchedEffect(emoji, playTrigger) {
+        loopCount = 0
+        controller.play()
+    }
+
+    DisposableEffect(controller) {
+        val listener = object : DotLottieEventListener {
+            override fun onLoop(loopCount: Int) {
+                // A biblioteca passa o total de loops realizados
+                if (loopCount >= 2) {
+                    controller.pause()
+                }
+            }
+        }
+        controller.addEventListener(listener)
+        onDispose {
+            controller.removeEventListener(listener)
+        }
+    }
 
     DotLottieAnimation(
         source = DotLottieSource.Url(url),
         autoplay = true,
         loop = true,
+        controller = controller,
         modifier = modifier
     )
 }
@@ -274,6 +304,7 @@ fun TaskExecutionCard(
     modifier: Modifier = Modifier
 ) {
     val task = taskState.task
+    var animationTrigger by remember { mutableIntStateOf(0) }
 
     Row(
         modifier = modifier
@@ -286,12 +317,16 @@ fun TaskExecutionCard(
         Surface(
             modifier = Modifier
                 .size(68.dp)
-                .bounceClick { /* Feedback apenas */ },
+                .bounceClick { animationTrigger++ },
             color = MaterialTheme.colorScheme.secondaryContainer,
             shape = RoundedCornerShape(24.dp)
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(8.dp)) {
-                AnimatedEmoji(emoji = task.iconEmoji, modifier = Modifier.fillMaxSize())
+                AnimatedEmoji(
+                    emoji = task.iconEmoji,
+                    playTrigger = animationTrigger,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
 
@@ -300,7 +335,7 @@ fun TaskExecutionCard(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
-                .bounceClick { /* Feedback apenas */ },
+                .bounceClick { animationTrigger++ },
             color = MaterialTheme.colorScheme.secondaryContainer,
             shape = RoundedCornerShape(24.dp)
         ) {
@@ -335,7 +370,10 @@ fun TaskExecutionCard(
             modifier = Modifier
                 .width(IntrinsicSize.Min)
                 .fillMaxHeight()
-                .bounceClick(enabled = !taskState.isBlocked) { onExecute() },
+                .bounceClick(enabled = !taskState.isBlocked) { 
+                    animationTrigger++
+                    onExecute() 
+                },
             color = if (taskState.isBlocked)
                 MaterialTheme.colorScheme.surfaceVariant
             else MaterialTheme.colorScheme.secondaryContainer,
@@ -548,7 +586,11 @@ fun GoalProgressCard(
                         val morphingShape = remember(morphProgress) {
                             val index = morphProgress.toInt().coerceIn(0, shapes.size - 2)
                             val localProgress = morphProgress - index
-                            val morph = Morph(shapes[index], shapes[index + 1])
+                            
+                            val morph = Morph(
+                                start = shapes[index] ?: MaterialShapes.Circle,
+                                end = shapes[index + 1] ?: MaterialShapes.Circle
+                            )
                             
                             object : Shape {
                                 override fun createOutline(
@@ -604,7 +646,7 @@ fun GoalProgressCard(
                         )
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "$animatedPoints",
+                                text = animatedPoints.toString(),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer

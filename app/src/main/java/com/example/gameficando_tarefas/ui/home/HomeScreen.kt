@@ -1,8 +1,8 @@
 package com.example.gameficando_tarefas.ui.home
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -31,6 +31,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -72,141 +74,159 @@ private fun HomeScreenContent(
     }
 
     val scaffoldState = rememberBottomSheetScaffoldState()
+    val localDensity = LocalDensity.current
+    var topContentHeight by remember { mutableStateOf(0.dp) }
 
-    BottomSheetScaffold(
-        modifier = modifier.padding(bottom = contentPadding.calculateBottomPadding()),
-        scaffoldState = scaffoldState,
-        sheetPeekHeight = 460.dp,
-        sheetShape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-        sheetContainerColor = MaterialTheme.colorScheme.surface,
-        sheetTonalElevation = 12.dp,
-        sheetDragHandle = { BottomSheetDefaults.DragHandle() },
-        sheetContent = {
-            // Conteúdo do "Sheet" de Tarefas
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val totalHeight = maxHeight
+        
+        // Calcula o peek height para que o sheet comece logo abaixo do card de pontos
+        val calculatedPeekHeight = remember(totalHeight, topContentHeight) {
+            if (topContentHeight > 0.dp) {
+                (totalHeight - topContentHeight + 16.dp).coerceAtLeast(300.dp)
+            } else {
+                460.dp // Fallback inicial
+            }
+        }
+
+        BottomSheetScaffold(
+            modifier = Modifier.padding(bottom = contentPadding.calculateBottomPadding()),
+            scaffoldState = scaffoldState,
+            sheetPeekHeight = calculatedPeekHeight,
+            sheetShape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+            sheetContainerColor = MaterialTheme.colorScheme.surface,
+            sheetTonalElevation = 12.dp,
+            sheetDragHandle = { BottomSheetDefaults.DragHandle() },
+            sheetContent = {
+                // Conteúdo do "Sheet" de Tarefas
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp)
+                ) {
+                    Text(
+                        text = "Tarefas de hoje",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    if (state.tasks.isEmpty()) {
+                        Column(
+                            modifier = Modifier.padding(vertical = 32.dp).fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Nenhuma tarefa para hoje!",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.outline
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Box(modifier = Modifier.size(64.dp)) {
+                                AnimatedEmoji(emoji = "🎉", modifier = Modifier.fillMaxSize())
+                            }
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(bottom = 24.dp)
+                        ) {
+                            items(state.tasks, key = { it.task.id }) { taskState ->
+                                TaskExecutionCard(
+                                    taskState = taskState,
+                                    onExecute = { onExecute(taskState.task) }
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.onPrimary // Fundo principal
+        ) { innerScaffoldPadding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 24.dp)
+                    .onGloballyPositioned { coordinates ->
+                        topContentHeight = with(localDensity) { coordinates.size.height.toDp() }
+                    }
+                    .padding(top = contentPadding.calculateTopPadding())
             ) {
-                Text(
-                    text = "Tarefas de hoje",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-
-                if (state.tasks.isEmpty()) {
-                    Column(
-                        modifier = Modifier.padding(vertical = 32.dp).fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                // Header: Saudação e Data
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column {
                         Text(
-                            text = "Nenhuma tarefa para hoje!",
+                            text = "Olá, ${activeProfile?.name ?: "João"}!",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Text(
+                            text = today,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.outline
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Box(modifier = Modifier.size(64.dp)) {
-                            AnimatedEmoji(emoji = "🎉", modifier = Modifier.fillMaxSize())
-                        }
                     }
+                    
+                    activeProfile?.let {
+                        ProfileBubble(
+                            label = it.name.filter { c -> c.isDigit() }.ifBlank { it.name.take(1) },
+                            active = true,
+                            onClick = {}
+                        )
+                    }
+                }
+
+                if (state.nextGoal != null) {
+                    GoalProgressCard(
+                        goal = state.nextGoal,
+                        totalPoints = state.netPoints,
+                        streakDays = 12, // Mock
+                        upcomingGoals = state.upcomingGoals,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        onRedeem = {
+                            redeemedGoalName = state.nextGoal.description
+                            onRedeem(state.nextGoal)
+                            showCelebration = true
+                        }
+                    )
                 } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(bottom = 24.dp)
+                    // Card simples apenas com pontos se não houver objetivo
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+                        ),
+                        shape = RoundedCornerShape(24.dp)
                     ) {
-                        items(state.tasks, key = { it.task.id }) { taskState ->
-                            TaskExecutionCard(
-                                taskState = taskState,
-                                onExecute = { onExecute(taskState.task) }
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Text(
+                                text = "Seus pontos",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                            )
+                            val formattedPoints = state.netPoints.toString().replace("(?<=\\d)(?=(\\d{3})+(?!\\d))", ".")
+                            Text(
+                                text = "$formattedPoints pts",
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Nenhum objetivo definido no momento.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.outline
                             )
                         }
-                    }
-                }
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.onPrimary // Fundo principal
-    ) { innerScaffoldPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = contentPadding.calculateTopPadding())
-        ) {
-            // Header: Saudação e Data
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Column {
-                    Text(
-                        text = "Olá, ${activeProfile?.name ?: "João"}!",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Text(
-                        text = today,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.outline
-                    )
-                }
-                
-                activeProfile?.let {
-                    ProfileBubble(
-                        label = it.name.filter { c -> c.isDigit() }.ifBlank { it.name.take(1) },
-                        active = true,
-                        onClick = {}
-                    )
-                }
-            }
-
-            if (state.nextGoal != null) {
-                GoalProgressCard(
-                    goal = state.nextGoal,
-                    totalPoints = state.netPoints,
-                    streakDays = 12, // Mock
-                    upcomingGoals = state.upcomingGoals,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    onRedeem = {
-                        redeemedGoalName = state.nextGoal.description
-                        onRedeem(state.nextGoal)
-                        showCelebration = true
-                    }
-                )
-            } else {
-                // Card simples apenas com pontos se não houver objetivo
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
-                    ),
-                    shape = RoundedCornerShape(24.dp)
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = "Seus pontos",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
-                        )
-                        val formattedPoints = state.netPoints.toString().replace("(?<=\\d)(?=(\\d{3})+(?!\\d))", ".")
-                        Text(
-                            text = "$formattedPoints pts",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Nenhum objetivo definido no momento.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.outline
-                        )
                     }
                 }
             }
